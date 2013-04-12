@@ -40,6 +40,7 @@ int do_exec(struct proc * caller, message * m_ptr)
 
   name[sizeof(name)-1] = '\0';
 
+  // ** Modification here **
   printf("executing... %s\n", name);
 
   /* Set process state. */
