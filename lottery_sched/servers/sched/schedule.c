@@ -12,6 +12,9 @@
 #include <assert.h>
 #include <minix/com.h>
 #include <machine/archtypes.h>
+#include <time.h>
+#include <stdlib.h>     
+
 #include "kernel/proc.h" /* for queue constants */
 
 static timer_t sched_timer;
@@ -47,7 +50,7 @@ static void balance_queues(struct timer *tp);
 #define is_system_proc(p)	((p)->parent == RS_PROC_NR)
 
 static unsigned cpu_proc[CONFIG_MAX_CPUS];
-
+static void run_lottery();
 static void pick_cpu(struct schedproc * proc)
 {
 #ifdef CONFIG_SMP
@@ -98,14 +101,31 @@ int do_noquantum(message *m_ptr)
 		return EBADEPT;
 	}
 
+	//[DoMe]check if rmp is a user proc, then put it in user waiting que
+	//fyi LOTTOPRIORITY = 17
 	rmp = &schedproc[proc_nr_n];
-	if (rmp->priority < MIN_USER_Q) {
+	
+	//if it is in the ru
+	
+	
+	//nning user slot, move it back
+	if(rmp->priority == MAX_USER_Q){
+		rmp->priority = MIN_USER_Q;
+	} else 
+	
+	//change to MIN_USER_Q - 1
+	if (rmp->priority < MAX_USER_Q - 1) {
+		//[debug]
+		printf("do_noquantum, reverting user proc priority\n");
 		rmp->priority += 1; /* lower priority */
 	}
 
 	if ((rv = schedule_process_local(rmp)) != OK) {
 		return rv;
 	}
+	
+	run_lottery();
+	
 	return OK;
 }
 
@@ -133,6 +153,10 @@ int do_stop_scheduling(message *m_ptr)
 #endif
 	rmp->flags = 0; /*&= ~IN_USE;*/
 
+	//run lotto?
+	//[debug]
+	printf("do_stop_scheduling\n");
+	
 	return OK;
 }
 
@@ -162,6 +186,8 @@ int do_start_scheduling(message *m_ptr)
 	/* Populate process slot */
 	rmp->endpoint     = m_ptr->SCHEDULING_ENDPOINT;
 	rmp->parent       = m_ptr->SCHEDULING_PARENT;
+	//[DoMe]
+	rmp->ticket_total = 10;
 	rmp->max_priority = (unsigned) m_ptr->SCHEDULING_MAXPRIO;
 	if (rmp->max_priority >= NR_SCHED_QUEUES) {
 		return EINVAL;
@@ -175,7 +201,8 @@ int do_start_scheduling(message *m_ptr)
 		   process scheduled, and the parent of itself. */
 		rmp->priority   = USER_Q;
 		rmp->time_slice = DEFAULT_USER_TIME_SLICE;
-
+		//[debug]
+		printf("assigned proc to USER_Q\n");
 		/*
 		 * Since kernel never changes the cpu of a process, all are
 		 * started on the BSP and the userspace scheduling hasn't
@@ -253,12 +280,13 @@ int do_start_scheduling(message *m_ptr)
 /*===========================================================================*
  *				do_nice					     *
  *===========================================================================*/
+
 int do_nice(message *m_ptr)
 {
 	struct schedproc *rmp;
 	int rv;
 	int proc_nr_n;
-	unsigned new_q, old_q, old_max_q;
+	unsigned new_q, old_q, old_max_q, old_ticket_total;
 
 	/* check who can send you requests */
 	if (!accept_message(m_ptr))
@@ -279,7 +307,8 @@ int do_nice(message *m_ptr)
 	/* Store old values, in case we need to roll back the changes */
 	old_q     = rmp->priority;
 	old_max_q = rmp->max_priority;
-
+	//[DoMe]
+	old_ticket_total = rmp->ticket_total;
 	/* Update the proc entry and reschedule the process */
 	rmp->max_priority = rmp->priority = new_q;
 
@@ -288,7 +317,11 @@ int do_nice(message *m_ptr)
 		 * back the changes to proc struct */
 		rmp->priority     = old_q;
 		rmp->max_priority = old_max_q;
+		//[DoMe]
+		rmp->ticket_total = old_ticket_total;
 	}
+	//[debug]
+	printf("do_nice\n");
 
 	return rv;
 }
@@ -355,7 +388,9 @@ static void balance_queues(struct timer *tp)
 
 	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		if (rmp->flags & IN_USE) {
-			if (rmp->priority > rmp->max_priority) {
+		//[DoMe] changed
+			//old//if (rmp->priority > rmp->max_priority) {
+			if (rmp->priority > rmp->max_priority && rmp->priority < MAX_USER_Q) {
 				rmp->priority -= 1; /* increase priority */
 				schedule_process_local(rmp);
 			}
@@ -364,3 +399,50 @@ static void balance_queues(struct timer *tp)
 
 	set_timer(&sched_timer, balance_timeout, balance_queues, 0);
 }
+
+//run_lottery
+static void run_lottery(){
+	
+	//same loop stuff from above
+	struct schedproc *rmp;
+	int proc_nr;
+
+	unsigned ticket_totals_sum;
+	//loop through and determine number of tickets
+	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
+		if(rmp->priority == USER_Q && (rmp->flags & IN_USE) ){
+			//if it's a user priority proc, add it up
+			ticket_totals_sum += rmp->ticket_total;
+			//[debug]
+			printf("found user proc in lotto sum: %d, procnum: %d\n",ticket_totals_sum,proc_nr);
+		}
+	}
+	srandom((unsigned) time(NULL));
+	int win_val = random() % ((int)ticket_totals_sum);
+	
+	printf("Winning lottery: %d\n",win_val);
+	//something for winner
+	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
+		if(rmp->priority == USER_Q && (rmp->flags & IN_USE)){
+			win_val -= rmp->ticket_total;
+			if(win_val < 0){
+				//we have a winner
+				//do something
+				rmp->priority = MAX_USER_Q;
+				break;
+			}
+		}
+	}
+	
+	//[debug]
+	printf("Winning procnum: %d\n",proc_nr);
+}
+
+
+
+
+
+
+
+
+
