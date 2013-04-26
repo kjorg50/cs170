@@ -107,16 +107,17 @@ int do_noquantum(message *m_ptr)
 	
 	//if it is in the ru
 	
-	
+	printf("do_noquantum");
 	//nning user slot, move it back
-	if(rmp->priority == MAX_USER_Q){
-		rmp->priority = MIN_USER_Q;
+	if(rmp->priority >= MAX_USER_Q && rmp->priority < MIN_USER_Q){
+		rmp->priority = USER_Q;
+		printf(", reverting user proc priority\n");
 	} else 
 	
 	//change to MIN_USER_Q - 1
 	if (rmp->priority < MAX_USER_Q - 1) {
-		//[debug]
-		printf("do_noquantum, reverting user proc priority\n");
+		
+		printf(", lowering non user\n");
 		rmp->priority += 1; /* lower priority */
 	}
 
@@ -156,6 +157,12 @@ int do_stop_scheduling(message *m_ptr)
 	//run lotto?
 	//[debug]
 	printf("do_stop_scheduling\n");
+	if(rmp->priority >= MAX_USER_Q && rmp->priority < MIN_USER_Q){
+		rmp->priority = USER_Q;
+		printf(", reverting user proc priority in do_noquantum\n");
+		run_lottery();
+	}
+	
 	
 	return OK;
 }
@@ -233,8 +240,10 @@ int do_start_scheduling(message *m_ptr)
 				&parent_nr_n)) != OK)
 			return rv;
 
-		rmp->priority = schedproc[parent_nr_n].priority;
+		//rmp->priority = schedproc[parent_nr_n].priority;
+		rmp->priority = USER_Q;
 		rmp->time_slice = schedproc[parent_nr_n].time_slice;
+		printf("assigned proc to USER_Q\n");
 		break;
 		
 	default: 
@@ -310,8 +319,8 @@ int do_nice(message *m_ptr)
 	//[DoMe]
 	old_ticket_total = rmp->ticket_total;
 	/* Update the proc entry and reschedule the process */
-	rmp->max_priority = rmp->priority = new_q;
-
+	//rmp->max_priority = rmp->priority = new_q;
+	rmp->priority = USER_Q;
 	if ((rv = schedule_process_local(rmp)) != OK) {
 		/* Something went wrong when rescheduling the process, roll
 		 * back the changes to proc struct */
@@ -407,7 +416,7 @@ static void run_lottery(){
 	struct schedproc *rmp;
 	int proc_nr;
 
-	unsigned ticket_totals_sum;
+	unsigned ticket_totals_sum = 0;
 	//loop through and determine number of tickets
 	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		if(rmp->priority == USER_Q && (rmp->flags & IN_USE) ){
@@ -417,19 +426,22 @@ static void run_lottery(){
 			printf("found user proc in lotto sum: %d, procnum: %d\n",ticket_totals_sum,proc_nr);
 		}
 	}
-	srandom((unsigned) time(NULL));
-	int win_val = random() % ((int)ticket_totals_sum);
+	proc_nr = -1;
+	if(ticket_totals_sum>0){
+		srandom((unsigned) time(NULL));
+		int win_val = random() % ((int)ticket_totals_sum);
 	
-	printf("Winning lottery: %d\n",win_val);
-	//something for winner
-	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-		if(rmp->priority == USER_Q && (rmp->flags & IN_USE)){
-			win_val -= rmp->ticket_total;
-			if(win_val < 0){
-				//we have a winner
-				//do something
-				rmp->priority = MAX_USER_Q;
-				break;
+		printf("Winning lottery: %d\n",win_val);
+		//something for winner
+		for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
+			if(rmp->priority == USER_Q && (rmp->flags & IN_USE)){
+				win_val -= rmp->ticket_total;
+				if(win_val < 0){
+					//we have a winner
+					//do something
+					rmp->priority = MAX_USER_Q;
+					break;
+				}
 			}
 		}
 	}
