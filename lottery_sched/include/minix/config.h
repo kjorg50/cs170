@@ -71,14 +71,14 @@
  //[DoMe]
  //increased by 1
 //old//#define NR_SCHED_QUEUES   16	/* MUST equal minimum priority + 1 */
-#define NR_SCHED_QUEUES   19	/* MUST equal minimum priority + 1 */
+#define NR_SCHED_QUEUES   18	/* MUST equal minimum priority + 1 */
 #define TASK_Q		   0	/* highest, used for kernel tasks */
 //old//#define MAX_USER_Q  	   0    /* highest priority for user processes */
 #define MAX_USER_Q  	   16    /* highest priority for user processes */   
 //old//#define USER_Q  	  ((MIN_USER_Q - MAX_USER_Q) / 2 + MAX_USER_Q) /* default
-#define USER_Q  	  (MAX_USER_Q + 1) /* default
+#define USER_Q  	  17 /* default
 						(should correspond to nice 0) */
-#define MIN_USER_Q	  (NR_SCHED_QUEUES - 1)	/* minimum priority for user
+#define MIN_USER_Q	  17	/* minimum priority for user
 						   processes */
 /* default scheduling quanta */
 #define USER_QUANTUM 200

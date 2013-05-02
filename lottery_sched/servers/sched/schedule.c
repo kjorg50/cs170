@@ -50,7 +50,7 @@ static void balance_queues(struct timer *tp);
 #define is_system_proc(p)	((p)->parent == RS_PROC_NR)
 
 static unsigned cpu_proc[CONFIG_MAX_CPUS];
-static void run_lottery();
+static int run_lottery();
 static void pick_cpu(struct schedproc * proc)
 {
 #ifdef CONFIG_SMP
@@ -101,31 +101,39 @@ int do_noquantum(message *m_ptr)
 		return EBADEPT;
 	}
 
-	//[DoMe]check if rmp is a user proc, then put it in user waiting que
-	//fyi LOTTOPRIORITY = 17
+	
 	rmp = &schedproc[proc_nr_n];
-	
-	//if it is in the ru
-	
-	printf("do_noquantum");
-	//nning user slot, move it back
-	if(rmp->priority >= MAX_USER_Q && rmp->priority < MIN_USER_Q){
+	//printf("do_noquantum");
+	//if it is in the running user slot, move it back
+	int runLotto=0;
+	if(rmp->priority == MAX_USER_Q ||rmp->priority==USER_Q){
+		
+		runLotto = 1;
+		//printf(", reverting user proc priority\n");
 		rmp->priority = USER_Q;
-		printf(", reverting user proc priority\n");
-	} else 
+		int tickets = rmp->ticket_total;
+		int increment = (tickets == 20) ? 0 : 1;
+		rmp->ticket_total += increment;
+		//printf("nq! old total: %d new total: %d",tickets,rmp->ticket_total);
+
+	} 
 	
-	//change to MIN_USER_Q - 1
+	
 	if (rmp->priority < MAX_USER_Q - 1) {
 		
-		printf(", lowering non user\n");
-		rmp->priority += 1; /* lower priority */
+		//printf(", lowering non user\n");
+		rmp->priority += 1;
 	}
-
+	
+	
 	if ((rv = schedule_process_local(rmp)) != OK) {
 		return rv;
 	}
+	int nrv;
+	if((nrv = run_lottery())!=OK){
+		return OK;
+	}
 	
-	run_lottery();
 	
 	return OK;
 }
@@ -156,12 +164,11 @@ int do_stop_scheduling(message *m_ptr)
 
 	//run lotto?
 	//[debug]
-	printf("do_stop_scheduling\n");
-	if(rmp->priority >= MAX_USER_Q && rmp->priority < MIN_USER_Q){
-		rmp->priority = USER_Q;
-		printf(", reverting user proc priority in do_noquantum\n");
-		run_lottery();
-	}
+	
+	
+	
+	//printf("do_stop_scheduling\n");
+	
 	
 	
 	return OK;
@@ -194,7 +201,7 @@ int do_start_scheduling(message *m_ptr)
 	rmp->endpoint     = m_ptr->SCHEDULING_ENDPOINT;
 	rmp->parent       = m_ptr->SCHEDULING_PARENT;
 	//[DoMe]
-	rmp->ticket_total = 10;
+	if(rmp->ticket_total > 20||rmp->ticket_total < 1)rmp->ticket_total=10;
 	rmp->max_priority = (unsigned) m_ptr->SCHEDULING_MAXPRIO;
 	if (rmp->max_priority >= NR_SCHED_QUEUES) {
 		return EINVAL;
@@ -206,10 +213,12 @@ int do_start_scheduling(message *m_ptr)
 	if (rmp->endpoint == rmp->parent) {
 		/* We have a special case here for init, which is the first
 		   process scheduled, and the parent of itself. */
-		rmp->priority   = USER_Q;
+		
+			rmp->priority   = USER_Q;
+		
 		rmp->time_slice = DEFAULT_USER_TIME_SLICE;
 		//[debug]
-		printf("assigned proc to USER_Q\n");
+		//printf("assigned proc to USER_Q\n");
 		/*
 		 * Since kernel never changes the cpu of a process, all are
 		 * started on the BSP and the userspace scheduling hasn't
@@ -240,10 +249,12 @@ int do_start_scheduling(message *m_ptr)
 				&parent_nr_n)) != OK)
 			return rv;
 
-		//rmp->priority = schedproc[parent_nr_n].priority;
-		rmp->priority = USER_Q;
+		
+			rmp->priority   = USER_Q;
+	
+		//printf("assigned proc to USER_Q\n");
 		rmp->time_slice = schedproc[parent_nr_n].time_slice;
-		printf("assigned proc to USER_Q\n");
+		//printf("assigned proc to USER_Q\n");
 		break;
 		
 	default: 
@@ -269,8 +280,7 @@ int do_start_scheduling(message *m_ptr)
 	}
 
 	if (rv != OK) {
-		printf("Sched: Error while scheduling process, kernel replied %d\n",
-			rv);
+		printf("Sched: Error while scheduling process, kernel replied %d\n",rv);
 		return rv;
 	}
 
@@ -319,8 +329,12 @@ int do_nice(message *m_ptr)
 	//[DoMe]
 	old_ticket_total = rmp->ticket_total;
 	/* Update the proc entry and reschedule the process */
-	//rmp->max_priority = rmp->priority = new_q;
-	rmp->priority = USER_Q;
+	
+	rmp->max_priority = rmp->priority = USER_Q;
+	int increment = (old_ticket_total == 1) ? 0 : 1;
+	rmp->ticket_total -= increment;
+	//printf("nice! old total: %d new total: %d",old_ticket_total,rmp->ticket_total); 
+	
 	if ((rv = schedule_process_local(rmp)) != OK) {
 		/* Something went wrong when rescheduling the process, roll
 		 * back the changes to proc struct */
@@ -328,10 +342,16 @@ int do_nice(message *m_ptr)
 		rmp->max_priority = old_max_q;
 		//[DoMe]
 		rmp->ticket_total = old_ticket_total;
+		return rv;
 	}
 	//[debug]
-	printf("do_nice\n");
-
+	//printf("do_nice\n");
+	/*
+	int nrv;
+	if((nrv = run_lottery())!=OK){
+		return nrv;
+	}*/
+	
 	return rv;
 }
 
@@ -410,51 +430,56 @@ static void balance_queues(struct timer *tp)
 }
 
 //run_lottery
-static void run_lottery(){
+static int run_lottery(){
 	
 	//same loop stuff from above
 	struct schedproc *rmp;
 	int proc_nr;
 
-	unsigned ticket_totals_sum = 0;
+	int ticket_totals_sum = 0;
 	//loop through and determine number of tickets
 	for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		if(rmp->priority == USER_Q && (rmp->flags & IN_USE) ){
 			//if it's a user priority proc, add it up
 			ticket_totals_sum += rmp->ticket_total;
 			//[debug]
-			printf("found user proc in lotto sum: %d, procnum: %d\n",ticket_totals_sum,proc_nr);
+			//printf("found user proc in lotto sum: %d, procnum: %d\n",ticket_totals_sum,proc_nr);
 		}
 	}
+	//printf("in lotto, sum = %d\n",ticket_totals_sum);
 	proc_nr = -1;
 	if(ticket_totals_sum>0){
-		srandom((unsigned) time(NULL));
-		int win_val = random() % ((int)ticket_totals_sum);
+		srandom(time(NULL));
+		int win_val = random() % (ticket_totals_sum);
+		
 	
-		printf("Winning lottery: %d\n",win_val);
+		//printf("Winning lottery: %d\n",win_val);
 		//something for winner
 		for (proc_nr=0, rmp=schedproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
+			int found = 0;
 			if(rmp->priority == USER_Q && (rmp->flags & IN_USE)){
 				win_val -= rmp->ticket_total;
+				
 				if(win_val < 0){
 					//we have a winner
-					//do something
+					//do somethingreboot
 					rmp->priority = MAX_USER_Q;
-					break;
+					//printf("winner found, process rescheduling\n");
+					found =1;
+					schedule_process_local(rmp);
+					
 				}
+				
 			}
+			if(found)break;
 		}
+	} else {
+		return -1;
 	}
 	
+	
 	//[debug]
-	printf("Winning procnum: %d\n",proc_nr);
+	//printf("Winning procnum: %d\n",proc_nr);
+	return OK;
 }
-
-
-
-
-
-
-
-
 
