@@ -90,6 +90,10 @@
 #define ROOT_SYS_PROC_NR  RS_PROC_NR
 #define ROOT_USR_PROC_NR  INIT_PROC_NR
 
+// SEMAPHORE PROCESS 			[modify]
+#define SEM_PROC_NR  ((endpoint_t) 12)
+
+
 /*===========================================================================*
  *                	   Kernel notification types                         *
  *===========================================================================*/
