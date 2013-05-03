@@ -134,6 +134,14 @@ int		ttyunlock(const char *);
 uint16_t	disklabel_dkcksum(struct disklabel *);
 int		disklabel_scan(struct disklabel *, char *, size_t);
 
+// ************************************************************
+// 			Semaphore stuff [modify]
+// ************************************************************
+int 	sem_init(int start_value);
+//int 	sem_down(int semgit_number);	// P()
+//int	sem_up(int sem_number);		// V()
+//int 	sem_release(int semaphore);
+
 /* Error checked functions */
 void		(*esetfunc(void (*)(int, const char *, ...)))
     (int, const char *, ...);
