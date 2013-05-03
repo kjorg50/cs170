@@ -66,6 +66,9 @@
 #define GETMCONTEXT       67
 #define SETMCONTEXT       68
 
+// Semaphore Init 	[modify]
+#define SEM_INIT	  69
+
 /* Posix signal handling. */
 #define SIGACTION	  71
 #define SIGSUSPEND	  72
