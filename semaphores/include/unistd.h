@@ -149,7 +149,7 @@ ssize_t	 write(int, const void *, size_t);
 // ************************************************************
 // 			Semaphore stuff [modify]
 // ************************************************************
-int 	sem_init(int start_value);
+int 	sem_init(int);
 //int 	sem_down(int semgit_number);	// P()
 //int	sem_up(int sem_number);		// V()
 //int 	sem_release(int semaphore);
