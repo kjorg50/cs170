@@ -2,7 +2,7 @@
 #include "namespace.h"
 #include <lib.h>
 
-#include <util.h>
+#include <unistd.h>
 // [modify]
 
 int sem_init(int start_value)
