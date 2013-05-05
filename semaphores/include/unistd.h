@@ -146,6 +146,13 @@ __aconst char *ttyname(int);
 int	 unlink(const char *);
 ssize_t	 write(int, const void *, size_t);
 
+// ************************************************************
+// 			Semaphore stuff [modify]
+// ************************************************************
+int 	sem_init(int start_value);
+//int 	sem_down(int semgit_number);	// P()
+//int	sem_up(int sem_number);		// V()
+//int 	sem_release(int semaphore);
 
 /*
  * IEEE Std 1003.2-92, adopted in X/Open Portability Guide Issue 4 and later
