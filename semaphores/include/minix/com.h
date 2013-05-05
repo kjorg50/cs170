@@ -91,7 +91,7 @@
 #define ROOT_USR_PROC_NR  INIT_PROC_NR
 
 // SEMAPHORE PROCESS 			[modify]
-#define SEM_PROC_NR  ((endpoint_t) 12)
+//#define SEM_PROC_NR  ((endpoint_t) 12)
 
 
 /*===========================================================================*
