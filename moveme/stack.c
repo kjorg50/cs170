@@ -25,7 +25,7 @@ void stackInit(stack *stackP, int size)
   	stackP->top = -1;  /* I.e., empty */
 }
 
-void StackDestroy(stack *stackP)
+void stackDestroy(stack *stackP)
 {
   /* Get rid of array. */
   free(stackP->contents);
@@ -33,4 +33,36 @@ void StackDestroy(stack *stackP)
   stackP->contents = NULL;
   stackP->size = 0;
   stackP->top = -1;  /* I.e., empty */
+}
+
+int checkEmpty(stack *stackP)
+{
+  return stackP->top < 0;
+}
+
+int checkFull(stack *stackP)
+{
+  return stackP->top >= stackP->size - 1;
+}
+
+void push(stack *stackP, stackElementT element)
+{
+  if (checkFull(stackP)) {
+    fprintf(stderr, "Can't push element on stack: stack is full.\n");
+    exit(1);  /* Exit, returning error code. */
+  }
+
+  // top gets incremented before it is used as an index for the array
+  stackP->contents[++stackP->top] = element; 
+}
+
+stackElementT pop(stack *stackP)
+{
+  if (checkEmpty(stackP)) {
+    fprintf(stderr, "Can't pop element from stack: stack is empty.\n");
+    exit(1);  /* Exit, returning error code. */
+  }
+
+  // this time, the value of top gets used as the index BEFORE it is decremented
+  return stackP->contents[stackP->top--];
 }

@@ -2,10 +2,10 @@
 // The following code is based on:
 //   http://www.cs.bu.edu/teaching/c/stack/array/
 
-#ifndef VECTOR_H__
-#define VECTOR_H__
+#ifndef STACK_H__
+#define STACK_H__
 
-typedef int stackElementT; // give the it a generic name type
+typedef int stackElementT; // give it a generic name type, in this case they will be ints
 
 typedef struct stack_ {
 	stackElementT *contents;
@@ -15,5 +15,9 @@ typedef struct stack_ {
 
 void stackInit(stack *stackP, int size);
 void stackDestroy(stack *stackP);
-int stackIsEmpty(stack *stackP);
-int stackIsFull(stack *stackP);
+int checkEmpty(stack *stackP);
+int checkFull(stack *stackP);
+void push(stack *stackP, stackElementT element);
+stackElementT pop(stack *stackP);
+
+#endif
