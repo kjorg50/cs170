@@ -6,6 +6,7 @@
 #include <stdlib.h>
  
 #include "vector.h"
+#include "errno.h"
  
 void vector_init(vector *v)
 {
@@ -19,8 +20,10 @@ int vector_count(vector *v)
 	return v->count;
 }
  
-void vector_add(vector *v, void *e)
+int vector_add(vector *v, void *e)
 {
+	int added_index = -1;	
+
 	if (v->size == 0) {
 		v->size = 10;
 		v->data = malloc(sizeof(void*) * v->size);
@@ -35,21 +38,28 @@ void vector_add(vector *v, void *e)
 	}
  
 	v->data[v->count] = e;
+	added_index = v->count;
 	v->count++;
+
+	return added_index;
 }
  
-void vector_set(vector *v, int index, void *e)
+int vector_set(vector *v, int index, void *e)
 {
-	if (index >= v->count) {
-		return;
+	if (index >= v->size) { 
+		// I don't think we need these printf statements, but I just left them for now
+		fprintf(stderr, "EINVAL: semaphore number is out of bounds.\n");
+		return EINVAL;
 	}
  
 	v->data[index] = e;
+	return OK;
 }
  
 void *vector_get(vector *v, int index)
 {
-	if (index >= v->count) {
+	if (index >= v->size) {
+		fprintf(stderr, "EINVAL: semaphore number is out of bounds.\n");
 		return;
 	}
  
@@ -58,7 +68,7 @@ void *vector_get(vector *v, int index)
  
 void vector_delete(vector *v, int index)
 {
-	if (index >= v->count) {
+	if (index >= v->size) {
 		return;
 	}
  
