@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
  
 #include "vector.h"
 #include "errno.h"
@@ -60,7 +61,7 @@ void *vector_get(vector *v, int index)
 {
 	if (index >= v->size) {
 		fprintf(stderr, "EINVAL: semaphore number is out of bounds.\n");
-		return;
+		return NULL;
 	}
  
 	return v->data[index];
