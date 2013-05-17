@@ -266,12 +266,11 @@ diff -ruNp minix_src_clean/servers/pm/main.c proj2/servers/pm/main.c
  		  panic("PM got message from invalid endpoint: %d", who_e);
 diff -ruNp minix_src_clean/servers/rs/main.c proj2/servers/rs/main.c
 --- minix_src_clean/servers/rs/main.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj2/servers/rs/main.c	2013-05-07 22:47:52.729977199 -0700
-@@ -64,6 +64,8 @@ int main(void)
++++ proj2/servers/rs/main.c	2013-05-16 21:07:12.475924708 -0700
+@@ -64,6 +64,7 @@ int main(void)
  
        call_nr = m.m_type;
  
-+	if(who_e == 11)printf("Message for SEM recieved in RS\n");
 +
        /* Now determine what to do.  Four types of requests are expected:
         * - Heartbeat messages (notifications from registered system services)
@@ -369,7 +368,7 @@ diff -ruNp minix_src_clean/servers/semaphore/inc.h proj2/servers/semaphore/inc.h
 +#endif
 diff -ruNp minix_src_clean/servers/semaphore/main.c proj2/servers/semaphore/main.c
 --- minix_src_clean/servers/semaphore/main.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/main.c	2013-05-16 20:24:24.790896515 -0700
++++ proj2/servers/semaphore/main.c	2013-05-16 20:42:58.100137447 -0700
 @@ -0,0 +1,113 @@
 +
 +
@@ -450,8 +449,8 @@ diff -ruNp minix_src_clean/servers/semaphore/main.c proj2/servers/semaphore/main
 +			reply(who_e, &m_in);		/* send it away */
 +      }
 +	}
-+	//Qvector_free(&waiting_list);
-+	//vector_free(&sem_list);
++	Qvector_free(&waiting_list);
++	vector_free(&sem_list);
 +	return(OK);				/* shouldn't come here */
 +}
 +
