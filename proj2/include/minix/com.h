@@ -80,7 +80,8 @@
 #define VM_PROC_NR   ((endpoint_t) 8)   /* memory server */
 #define PFS_PROC_NR  ((endpoint_t) 9)  /* pipe filesystem */
 #define SCHED_PROC_NR ((endpoint_t) 10)	/* scheduler */
-#define LAST_SPECIAL_PROC_NR	11	/* An untyped version for
+#define SEMAPHORE_PROC_NR ((endpoint_t) 11)
+#define LAST_SPECIAL_PROC_NR	12	/* An untyped version for
                                            computation in macros.*/
 #define INIT_PROC_NR ((endpoint_t) LAST_SPECIAL_PROC_NR)  /* init
                                                         -- goes multiuser */
@@ -351,6 +352,8 @@
 #  define SYS_STATECTL (KERNEL_CALL + 55)	/* sys_statectl() */
 
 #  define SYS_SAFEMEMSET (KERNEL_CALL + 56)	/* sys_safememset() */
+
+
 
 /* Total */
 #define NR_SYS_CALLS	57	/* number of kernel calls */

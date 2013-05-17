@@ -25,6 +25,7 @@ struct boot_image_priv boot_image_priv_table[] = {
 {LOG_PROC_NR,  "log",    SRV_F  },
 {MFS_PROC_NR,"fs_imgrd", SRV_F  },
 {PFS_PROC_NR,  "pfs",    SRV_F  },
+{SEMAPHORE_PROC_NR,"semaphore",SRV_F},
 {INIT_PROC_NR, "init",   USR_F  },
 {NULL_BOOT_NR, "",       0,     } /* null entry */
 };
@@ -39,6 +40,7 @@ struct boot_image_sys boot_image_sys_table[] = {
   { LOG_PROC_NR,      SRV_SF                            },
   { MFS_PROC_NR,      0                                 },
   { PFS_PROC_NR,      SRV_SF                            },
+  { SEMAPHORE_PROC_NR, SRV_SF},
   { DEFAULT_BOOT_NR,  SRV_SF                            } /* default entry */
 };
 
@@ -49,6 +51,7 @@ struct boot_image_dev boot_image_dev_table[] = {
   { MEM_PROC_NR,     SRV_DF,  MEMORY_MAJOR, STYLE_DEV,  STYLE_NDEV },
   { LOG_PROC_NR,     SRV_DF,  LOG_MAJOR,    STYLE_DEVA, STYLE_NDEV },
   { PFS_PROC_NR,     SRV_DF,  UDS_MAJOR,    STYLE_CLONE_A,STYLE_NDEV },
+  { SEMAPHORE_PROC_NR, SRV_DF, 0, 0, 0 },
   { DEFAULT_BOOT_NR, SRV_DF,  0,            STYLE_NDEV, STYLE_NDEV } /* default
                                                                       * entry
                                                                       */

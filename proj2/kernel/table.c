@@ -48,11 +48,9 @@ struct boot_image image[NR_BOOT_PROCS] = {
 {IDLE,          "idle"  },
 {CLOCK,         "clock" },
 {SYSTEM,        "system"},
-{HARDWARE,      "kernel"},
-                      
+{HARDWARE,      "kernel"},           
 {DS_PROC_NR,    "ds"    },
-{RS_PROC_NR,    "rs"    },
-                      
+{RS_PROC_NR,    "rs"    },                     
 {PM_PROC_NR,    "pm"    },
 {SCHED_PROC_NR, "sched" },
 {VFS_PROC_NR,   "vfs"   },
@@ -62,6 +60,7 @@ struct boot_image image[NR_BOOT_PROCS] = {
 {MFS_PROC_NR,   "mfs"   },
 {VM_PROC_NR,    "vm"    },
 {PFS_PROC_NR,   "pfs"   },
+{SEMAPHORE_PROC_NR, "semaphore"},
 {INIT_PROC_NR,  "init"  },
 };
 

@@ -54,7 +54,9 @@
 #define LSTAT		  53
 #define IOCTL		  54
 #define FCNTL		  55
+#define SEM_INIT	  56
 #define FS_READY	  57
+#define SEM_UP	  	  58
 #define EXEC		  59
 #define UMASK		  60 
 #define CHROOT		  61 
@@ -65,6 +67,8 @@
 #define SETGROUPS_O	  66
 #define GETMCONTEXT       67
 #define SETMCONTEXT       68
+#define SEM_DOWN	  69
+#define SEM_RELEASE	  70
 
 /* Posix signal handling. */
 #define SIGACTION	  71
