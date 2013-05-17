@@ -1,0 +1,131 @@
+Pizza Solution
+Alex Mousavi and Kyle Jorgensen
+
+TO TEST FILE:
+	run the make script with 
+		"sh makepizza"
+	run the dispatch program
+		"./pizzaDispatch"
+	that will output the two commands to run undergrad and grad
+	enter both of them in the same terminal window, separate from one used for ./pizzaDispatch
+	they will look like
+		"./undergrad [under semaphore number] [start semaphore number]"
+		"./grad [grad semaphore number] [start semaphore number]"
+	the window with those commands should output when things start and finish eating
+
+First, we run pizzaDispatch.c
+It starts be creating four semaphores all initialized to count = 0
+	- grad semaphore
+	- undergrad semaphore
+	- start semaphore
+	- control semaphore
+
+Then it calls
+	sem_down(start semaphore)
+twice, so it stops until we are read for it.
+
+Before that it prints out the command with the correct arguments for the next section, runnig grad.c and undergrad.c
+
+Then we run grad and undergrad with
+	./undergrad [undergrad semaphore] [start semaphore]
+	./grad [grad semaphore] [start semaphore]
+	
+They first both signal pizzaDispatch that it has begun with
+	sem_up(start semaphore)
+
+then they each fork a number of threads. one for each student they represent (2 and 6).
+
+each thread is then programmed to eat as much as possible after calling a down with:
+	while(1) //run forever
+		sem_down(grad or undergrad semaphore)
+		eat pizza //print something and/or sleep to visualize
+		sem_up(grad or undergrad semaphore)
+	end while
+
+they shouldn't start yet because the grad and undergrad semaphore are both 0.
+they are all now in the process queue
+that is it in those files.
+
+pizzaDispatch then regulates the students and starts its main loop
+
+first it signals the grad students to start eating two at a time by calling
+	sem_up(grad semaphore)
+twice
+
+then it forks twice:
+	
+	the main thread calls sem_down(control semaphore) twice so it will wait
+	
+	the two child threads will call:
+		sem_down(grad semaphore)
+		sem_up(control semaphore)
+		
+	this will put what we like to call a "fake student" in the grad process queue. After all the grad processes get to eat, the fake students will get to the pizza. Instead of eating and signalling the other grad students, it will signal the main thread to keep going and start regulating the undergrads to eat pizza. 
+	
+Once the two fake grad students get through the queue, we can stop their line.
+We can allow the undergrads to queue, then do the same thing with a fake undergrads.
+
+With this strategy, every grad students eats two at a time, then every undergrad eats two at a time. Our output looks like this for two dispatch cycles.
+
+grad #0 started eating
+grad #1 started eating
+grad #0 finished eating
+grad #1 finished eating
+grad #2 started eating
+grad #3 started eating
+grad #2 finished eating
+grad #3 finished eating
+grad #4 started eating
+grad #5 started eating
+grad #4 finished eating
+grad #5 finished eating
+undergrad #0 started eating
+undergrad #1 started eating
+undergrad #0 finished eating
+undergrad #1 finished eating
+grad #0 started eating
+grad #1 started eating
+grad #0 finished eating
+grad #1 finished eating
+grad #2 started eating
+grad #3 started eating
+grad #2 finished eating
+grad #3 finished eating
+grad #4 started eating
+grad #5 started eating
+grad #4 finished eating
+grad #5 finished eating
+undergrad #0 started eating
+undergrad #1 started eating
+undergrad #0 finished eating
+undergrad #1 finished eating
+
+
+How we like to imagine this at a high level is:
+Assume the there is a line of grad students and a line of undergrads outside of the pizza room
+	-put the fake grad students at the end of the grad line
+	-let the grad students eat two at a time
+	-when each grad student finishes eating, it lets the grad student or fake grad student behind it enter the room
+	-when the fake grad student gets to the pizza, it waits for the other fake grade student
+	-once they are together, put two fake undergrads at the end of the undergrad line
+	-let the undergrads in the room two at a time to eat
+	-when each undergrad finishes eating, it lets the undergrad or fake undergrad behind it enter the room
+	-when the fake undergrad gets to the pizza, it waits for the other fake undergrad
+	-once they are together, repeat
+	 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
