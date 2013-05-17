@@ -77,8 +77,8 @@ send_reply:
 			reply(who_e, &m_in);		/* send it away */
       }
 	}
-	//Qvector_free(&waiting_list);
-	//vector_free(&sem_list);
+	Qvector_free(&waiting_list);
+	vector_free(&sem_list);
 	return(OK);				/* shouldn't come here */
 }
 
