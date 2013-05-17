@@ -64,7 +64,7 @@ int main(void)
 
       call_nr = m.m_type;
 
-	if(who_e == 11)printf("Message for SEM recieved in RS\n");
+	//if(who_e == 11)printf("Message for SEM recieved in RS\n");
 
       /* Now determine what to do.  Four types of requests are expected:
        * - Heartbeat messages (notifications from registered system services)
