@@ -82,6 +82,12 @@ int main(int argc, char *argv[]){
 
     // the program should never get here, but if it does, it will exit and the 
     // grad and undergrad programs will keep running.
+
+    // if the while loop stops, release the semaphores
+    sem_release(CONTROL_SEM);
+    sem_release(GRAD_SEM);
+    sem_release(UNDER_SEM);
+    sem_release(START_SEM);
 	
 	exit(0);
 
