@@ -323,10 +323,10 @@ off_t position;			/* position in file whose blk wanted */
   dzones = rip->i_ndzones;
   nr_indirects = rip->i_nindirs;
 
-    /*
+    
   // [modify]
   if ((rip->imode & I_TYPE) == I_IMMEDIATE)
-    return(NO_BLOCK);  */
+    return(NO_BLOCK);  
 
   /* Is 'position' to be found in the inode itself? */
   if (zone < dzones) {
