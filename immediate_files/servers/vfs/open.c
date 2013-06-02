@@ -131,9 +131,11 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
   /* If O_CREATE is set, try to make the file. */
   if (oflags & O_CREAT) {
-        // set to I_IMMEDIATE type initially
+        // set to I_IMMEDIATE type initially [modify]
         omode = I_IMMEDIATE | (omode & ALLPERMS & fp->fp_umask);
-    //printf("*** Set a new file to type immediate: %d\n", I_IMMEDIATE);
+    if(omode == I_IMMEDIATE){
+        printf("*** Created a new immediate file w/ type: %d\n", I_IMMEDIATE);
+    }
 	vp = new_node(&resolve, oflags, omode);
 	r = err_code;
 	if (r == OK) exist = FALSE;	/* We just created the file */
