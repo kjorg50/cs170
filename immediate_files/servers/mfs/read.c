@@ -40,7 +40,7 @@ int fs_readwrite(void)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
-  regular = (mode_word == I_REGULAR || mode_word == I_NAMED_PIPE);
+  regular = (mode_word == I_REGULAR || mode_word == I_IMMEDIATE || mode_word == I_NAMED_PIPE);
   block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0);
   
   /* Determine blocksize */
@@ -74,6 +74,12 @@ int fs_readwrite(void)
 	   * blocks prior to the EOF must read as zeros.
 	   */
 	  if(position > f_size) clear_zone(rip, f_size, 0);
+  }
+    
+    // [modify]
+  if((rip->i_mode & I_TYPE) == I_IMMEDIATE){
+    if(rw_flag == WRITING) printf("**fs_readwrite() WRITING to immediate file\n");
+    else printf("**fs_readwrite() READING from immediate file\n");
   }
 
   /* If this is block i/o, check we can write */
@@ -325,8 +331,9 @@ off_t position;			/* position in file whose blk wanted */
 
     
   // [modify]
-  if ((rip->i_mode & I_TYPE) == I_IMMEDIATE)
+  if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){\
     return(NO_BLOCK);  
+  }
 
   /* Is 'position' to be found in the inode itself? */
   if (zone < dzones) {

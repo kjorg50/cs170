@@ -140,6 +140,7 @@ struct minix_prev_stat {
 #define	_S_IFDIR  0040000		/* directory */
 #define	_S_IFBLK  0060000		/* block special */
 #define	_S_IFREG  0100000		/* regular */
+#define _S_IFIMM  0110000       /* immediate file, for proj 3 [modify] */
 #define	_S_IFLNK  0120000		/* symbolic link */
 #define	_S_ISVTX  0001000		/* save swapped text even after use */
 #define	_S_IFSOCK 0140000		/* socket */
@@ -154,6 +155,7 @@ struct minix_prev_stat {
 #define	S_IFDIR	 _S_IFDIR
 #define	S_IFBLK	 _S_IFBLK
 #define	S_IFREG	 _S_IFREG
+#define S_IFIMM  _S_IFIMM
 #define	S_IFLNK	 _S_IFLNK
 #define	S_ISVTX	 _S_ISVTX
 #endif
@@ -171,6 +173,7 @@ struct minix_prev_stat {
 #define	S_ISCHR(m)	(((m) & _S_IFMT) == _S_IFCHR)	/* char special */
 #define	S_ISBLK(m)	(((m) & _S_IFMT) == _S_IFBLK)	/* block special */
 #define	S_ISREG(m)	(((m) & _S_IFMT) == _S_IFREG)	/* regular file */
+#define S_ISIMM(m)  (((m) & _S_IFMT0 == _S_IFIMM)   /* immediate file, for proj3 */
 #define	S_ISFIFO(m)	(((m) & _S_IFMT) == _S_IFIFO)	/* fifo */
 #if ((_POSIX_C_SOURCE - 0) >= 200112L) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)

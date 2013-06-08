@@ -133,7 +133,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
   if (oflags & O_CREAT) {
         // set to I_IMMEDIATE type initially [modify]
         omode = I_IMMEDIATE | (omode & ALLPERMS & fp->fp_umask);
-    if(omode == I_IMMEDIATE){
+    if(omode == (I_IMMEDIATE | (omode & ALLPERMS & fp->fp_umask))){
         printf("*** Created a new immediate file w/ type: %d\n", I_IMMEDIATE);
     }
 	vp = new_node(&resolve, oflags, omode);
@@ -171,6 +171,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	if ((r = forbidden(fp, vp, bits)) == OK) {
 		/* Opening reg. files, directories, and special files differ */
 		switch (vp->v_mode & S_IFMT) {
+           case S_IFIMM: /* so that it also goes to the REG case statement */
 		   case S_IFREG:
 			/* Truncate regular file if O_TRUNC. */
 			if (oflags & O_TRUNC) {

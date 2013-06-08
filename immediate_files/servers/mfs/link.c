@@ -536,17 +536,19 @@ off_t newsize;			/* inode must become this size */
   if (newsize > rip->i_sp->s_max_size)	/* don't let inode grow too big */
 	return(EFBIG);
   
-  // [modify]
-  if (file_type != I_IMMEDIATE){ // make sure to not do this to an immediate file
-      /* Free the actual space if truncating. */
-      if (newsize < rip->i_size) {
-      	if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
-      		return(r);
-      }
-  } else { printf("*** skipped trunctating on immediate file\n");
+ 
+  /* Free the actual space if truncating. */
+  if (newsize < rip->i_size) {
+
+    if (file_type != I_IMMEDIATE){// [modify]
+      printf("*** truncate_inode() called on immedate file inode\n");
+    } 
+  	else if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
+  	  return(r);
+  }
 
   /* Clear the rest of the last zone if expanding. */
-  if (newsize > rip->i_size) clear_zone(rip, rip->i_size, 0);
+  else if (newsize > rip->i_size) clear_zone(rip, rip->i_size, 0);
 
   /* Next correct the inode size. */
   rip->i_size = newsize;
