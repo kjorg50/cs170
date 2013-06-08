@@ -319,7 +319,7 @@ int do_truncate()
 	 * ensures that the file times are retained when the file size remains
 	 * the same, which is a POSIX requirement.
 	 */
-	if (S_ISREG(vp->v_mode) && vp->v_size == length)
+	if ((S_ISREG(vp->v_mode) || S_ISIMM(vp->v_mode)) && vp->v_size == length)
 		r = OK;
 	else
 		r = truncate_vnode(vp, length);
@@ -355,7 +355,7 @@ int do_ftruncate()
 
   if (!(rfilp->filp_mode & W_BIT))
 	r = EBADF;
-  else if (S_ISREG(vp->v_mode) && vp->v_size == length)
+  else if ((S_ISREG(vp->v_mode) || S_ISIMM(vp->v_mode)) && vp->v_size == length)
 	/* If the file size does not change, do not make the actual call. This
 	 * ensures that the file times are retained when the file size remains
 	 * the same, which is a POSIX requirement.

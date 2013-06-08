@@ -173,7 +173,7 @@ struct minix_prev_stat {
 #define	S_ISCHR(m)	(((m) & _S_IFMT) == _S_IFCHR)	/* char special */
 #define	S_ISBLK(m)	(((m) & _S_IFMT) == _S_IFBLK)	/* block special */
 #define	S_ISREG(m)	(((m) & _S_IFMT) == _S_IFREG)	/* regular file */
-#define S_ISIMM(m)  (((m) & _S_IFMT0 == _S_IFIMM)   /* immediate file, for proj3 */
+#define S_ISIMM(m)  (((m) & _S_IFMT) == _S_IFIMM)   /* immediate file, for proj3 */
 #define	S_ISFIFO(m)	(((m) & _S_IFMT) == _S_IFIFO)	/* fifo */
 #if ((_POSIX_C_SOURCE - 0) >= 200112L) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
