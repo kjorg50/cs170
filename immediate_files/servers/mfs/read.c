@@ -321,6 +321,11 @@ off_t position;			/* position in file whose blk wanted */
   unsigned int dzones, nr_indirects;
   block_t b;
   unsigned long excess, zone, block_pos;
+
+    // [modify]
+  if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){
+    return(NO_BLOCK);  
+  }
   
   scale = rip->i_sp->s_log_zone_size;	/* for block-zone conversion */
   block_pos = position/rip->i_sp->s_block_size;	/* relative blk # in file */
@@ -328,12 +333,6 @@ off_t position;			/* position in file whose blk wanted */
   boff = (int) (block_pos - (zone << scale) ); /* relative blk # within zone */
   dzones = rip->i_ndzones;
   nr_indirects = rip->i_nindirs;
-
-    
-  // [modify]
-  if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){\
-    return(NO_BLOCK);  
-  }
 
   /* Is 'position' to be found in the inode itself? */
   if (zone < dzones) {

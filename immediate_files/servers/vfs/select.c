@@ -305,7 +305,8 @@ static int is_deferred(struct selectentry *se)
  *===========================================================================*/
 static int is_regular_file(struct filp *f)
 {
-  return(f && f->filp_vno && S_ISREG(f->filp_vno->v_mode));
+    // [modify] 
+  return(f && f->filp_vno && (S_ISREG(f->filp_vno->v_mode) || S_ISIMM(f->filp_vno->v_mode)));
 }
 
 /*===========================================================================*
