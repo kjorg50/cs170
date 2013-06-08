@@ -42,7 +42,7 @@ int req;			/* either F_SETLK or F_SETLKW */
   mo = f->filp_mode;
   if (ltype != F_UNLCK && ltype != F_RDLCK && ltype != F_WRLCK) return(EINVAL);
   if (req == F_GETLK && ltype == F_UNLCK) return(EINVAL);
-  if (!S_ISREG(f->filp_vno->v_mode) && !S_ISBLK(f->filp_vno->v_mode))
+  if (!S_ISREG(f->filp_vno->v_mode) && !S_ISBLK(f->filp_vno->v_mode) && !S_ISIMM(f->filp_vno->v_mode))
 	return(EINVAL);
   if (req != F_GETLK && ltype == F_RDLCK && (mo & R_BIT) == 0) return(EBADF);
   if (req != F_GETLK && ltype == F_WRLCK && (mo & W_BIT) == 0) return(EBADF);
