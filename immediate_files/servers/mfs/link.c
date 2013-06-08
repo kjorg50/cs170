@@ -540,7 +540,7 @@ off_t newsize;			/* inode must become this size */
   /* Free the actual space if truncating. */
   if (newsize < rip->i_size) {
 
-    if (file_type != I_IMMEDIATE){// [modify]
+    if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){// [modify]
       printf("*** truncate_inode() called on immedate file inode\n");
     } 
   	else if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
