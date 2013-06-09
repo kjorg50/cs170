@@ -81,14 +81,13 @@ int fs_readwrite(void)
 
   if((rip->i_mode & I_TYPE) == I_IMMEDIATE){
     int sanity = 0;
-    if(f_size > 40) printf("** This immediate file is larger than 40 bytes!\n");
 
     if(rw_flag == WRITING){
-      printf("*** fs_readwrite() WRITING to immediate file\n");
+      //printf("*** fs_readwrite() WRITING to immediate file\n");
       
       // If file is going to grow into regular file
-      if((f_size + nrbytes) > 40 || position > 40){
-        char tmp[40];
+      if((f_size + nrbytes) > 32 || position > 32){
+        char tmp[32];
         register int i;
         register struct buf *bp;
 
@@ -98,16 +97,15 @@ int fs_readwrite(void)
         
         /* clear inode to because we will replace the data with pointers */
         rip->i_size = 0;
-        rip->i_update = ATIME | CTIME | MTIME;	/* update all times later */
+        rip->i_update = ATIME | CTIME | MTIME;	
         IN_MARKDIRTY(rip);
         for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
 
-        /* Writing to a nonexistent block. Create and enter in inode.*/
-    		if ((bp = new_block(rip, (off_t) 0)) == NULL)
+    	if ((bp = new_block(rip, (off_t) 0)) == NULL)
     			panic("bp caused error in fs_readwrite in read.c");
 
-        /* copy data to bp->data */
-    		for(i = 0; i < f_size; i++)
+        /* copy data to b_data */
+    	for(i = 0; i < f_size; i++)
         {
           b_data(bp)[i] = tmp[i];
         }
@@ -119,16 +117,18 @@ int fs_readwrite(void)
         f_size = rip->i_size;
         rip->i_mode = (I_REGULAR | (rip->i_mode & ALL_MODES));
       }
+      else{
+        sanity = 1;
+      }
+        
     }// end "if writing" block
     else{
-      printf("**fs_readwrite() READING from immediate file\n");
+      //printf("**fs_readwrite() READING from immediate file\n");
       
       bytes_left = f_size - position;
-      
-      if(bytes_left > 0)
-      {
+      if(bytes_left > 0){
         sanity = 1;
-        /* don't read past the EOF, just right up to it */
+
         if(nrbytes > bytes_left) nrbytes = bytes_left;
       }
     }

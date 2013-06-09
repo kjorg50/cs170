@@ -319,6 +319,7 @@ int do_truncate()
 	 * ensures that the file times are retained when the file size remains
 	 * the same, which is a POSIX requirement.
 	 */
+    // [modify]
 	if ((S_ISREG(vp->v_mode) || S_ISIMM(vp->v_mode)) && vp->v_size == length)
 		r = OK;
 	else
@@ -355,7 +356,7 @@ int do_ftruncate()
 
   if (!(rfilp->filp_mode & W_BIT))
 	r = EBADF;
-  else if ((S_ISREG(vp->v_mode) || S_ISIMM(vp->v_mode)) && vp->v_size == length)
+  else if ((S_ISREG(vp->v_mode) || S_ISIMM(vp->v_mode)) && vp->v_size == length) // [modify]
 	/* If the file size does not change, do not make the actual call. This
 	 * ensures that the file times are retained when the file size remains
 	 * the same, which is a POSIX requirement.
@@ -380,7 +381,7 @@ off_t newsize;
   int r;
 
   assert(tll_locked_by_me(&vp->v_lock));
-  if (!S_ISREG(vp->v_mode) && !S_ISFIFO(vp->v_mode) && !S_ISIMM(vp->v_mode)) return(EINVAL);
+  if (!S_ISREG(vp->v_mode) && !S_ISFIFO(vp->v_mode) && !S_ISIMM(vp->v_mode)) return(EINVAL); // [modify]
 
   /* We must not compare the old and the new size here: this function may be
    * called for open(2), which requires an update to the file times if O_TRUNC

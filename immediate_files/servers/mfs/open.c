@@ -277,7 +277,7 @@ static struct inode *new_node(struct inode *ldirp,
 
   /* if creating a regular file, set it to be an immediate [modify] */
   else if((bits & I_TYPE) == I_REGULAR) bits |= I_IMMEDIATE;
-  printf("new_node() - mode bits: 0%6o\n", bits);
+  //printf("new_node() - mode bits: 0%6o\n", bits);
 
   if ( rip == NULL && err_code == ENOENT) {
 	/* Last path component does not exist.  Make new directory entry. */

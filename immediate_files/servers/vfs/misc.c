@@ -235,7 +235,7 @@ int do_fcntl()
 	signed long offset;
 
 	/* Check if it's a regular file. */
-	if (!S_ISREG(f->filp_vno->v_mode)) r = EINVAL;
+	if (!S_ISREG(f->filp_vno->v_mode) && !S_ISIMM(f->filp_vno->v_mode)) r = EINVAL;
 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
 	else
 		/* Copy flock data from userspace. */

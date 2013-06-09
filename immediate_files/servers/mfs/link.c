@@ -542,7 +542,7 @@ off_t newsize;			/* inode must become this size */
 
     if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){// [modify]
       // do nothing
-      printf("*** truncate_inode() called on immedate file inode\n");
+      //printf("*** truncate_inode() called on immedate file inode\n");
     } 
   	else if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
   	  return(r);
@@ -555,8 +555,8 @@ off_t newsize;			/* inode must become this size */
     { // if it is immediate
       if((rip->i_mode & I_TYPE) == I_IMMEDIATE)
       { // if we need to change it to an immediate file
-        if(newsize > 40){
-          char tmp[40];
+        if(newsize > 32){
+          char tmp[32];
           register int i;
           register struct buf *bp;
 
@@ -565,16 +565,15 @@ off_t newsize;			/* inode must become this size */
             tmp[i] = *(((char *)rip->i_zone) + i);
           }
 
-          rip->i_update = ATIME | CTIME | MTIME;	/* update all times later */
+          rip->i_update = ATIME | CTIME | MTIME;	
           IN_MARKDIRTY(rip);
           for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
 
-          /* Writing to a nonexistent block. Create and enter in inode.*/
-    		  if ((bp = new_block(rip, (off_t) 0)) == NULL)
+    	  if ((bp = new_block(rip, (off_t) 0)) == NULL)
     			  panic("bp caused error in truncate_inode immediate growth");
 
           /* copy data to b_data */
-    		  for(i = 0; i < rip->i_size; i++)
+    	  for(i = 0; i < rip->i_size; i++)
           {
             b_data(bp)[i] = tmp[i];
           }
@@ -599,6 +598,8 @@ off_t newsize;			/* inode must become this size */
       }      
       
    } // end "if (newsize > rip->i_size)"
+
+  // end [modify]
 
   /* Next correct the inode size. */
   rip->i_size = newsize;

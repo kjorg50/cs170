@@ -288,9 +288,9 @@ struct inode *alloc_inode(dev_t dev, mode_t bits)
 	/* No inode table slots available.  Free the inode just allocated. */
 	free_bit(sp, IMAP, b);
   } else {
-	/* An inode slot is available. Put the inode just allocated into it. */
+	/* An inode slot is available. Put the inode just allocated into it. */ //[modify]
 	rip->i_mode = ((bits & I_TYPE) == I_REGULAR ? bits | I_IMMEDIATE : bits); /* set up RWX bits */
-    printf("*** alloc_inode() - mode bits: 0%6o\n", rip->i_mode);
+    //printf("*** alloc_inode() - mode bits: 0%6o\n", rip->i_mode);
 	rip->i_nlinks = NO_LINK;	/* initial no links */
 	rip->i_uid = caller_uid;	/* file's uid is owner's */
 	rip->i_gid = caller_gid;	/* ditto group id */
