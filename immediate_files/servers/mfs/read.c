@@ -61,7 +61,7 @@ int fs_readwrite(void)
   lmfs_reset_rdwt_err();
 
   /* If this is file i/o, check we can write */
-  if (rw_flag == WRITING && !block_spec) {
+  if (rw_flag == WRITING && !block_spec && (rip->i_mode & I_TYPE) != I_IMMEDIATE) {
   	  if(rip->i_sp->s_rd_only) 
 		  return EROFS;
 
@@ -77,17 +77,91 @@ int fs_readwrite(void)
   }
     
     // [modify]
+  cum_io = 0;
+
   if((rip->i_mode & I_TYPE) == I_IMMEDIATE){
-    if(rw_flag == WRITING) printf("**fs_readwrite() WRITING to immediate file\n");
-    else printf("**fs_readwrite() READING from immediate file\n");
-  }
+    int sanity = 0;
+    if(f_size > 40) printf("** This immediate file is larger than 40 bytes!\n");
+
+    if(rw_flag == WRITING){
+      printf("*** fs_readwrite() WRITING to immediate file\n");
+      
+      // If file is going to grow into regular file
+      if((f_size + nrbytes) > 40 || position > 40){
+        char tmp[40];
+        register int i;
+        register struct buf *bp;
+
+        for(i = 0; i < f_size; i++){
+          tmp[i] = *(((char *)rip->i_zone) + i);
+        }
+        
+        /* clear inode to because we will replace the data with pointers */
+        rip->i_size = 0;
+        rip->i_update = ATIME | CTIME | MTIME;	/* update all times later */
+        IN_MARKDIRTY(rip);
+        for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
+
+        /* Writing to a nonexistent block. Create and enter in inode.*/
+    		if ((bp = new_block(rip, (off_t) 0)) == NULL)
+    			panic("bp caused error in fs_readwrite in read.c");
+
+        /* copy data to bp->data */
+    		for(i = 0; i < f_size; i++)
+        {
+          b_data(bp)[i] = tmp[i];
+        }
+
+        MARKDIRTY(bp);
+        put_block(bp, PARTIAL_DATA_BLOCK);
+
+        position += f_size;
+        f_size = rip->i_size;
+        rip->i_mode = (I_REGULAR | (rip->i_mode & ALL_MODES));
+      }
+    }// end "if writing" block
+    else{
+      printf("**fs_readwrite() READING from immediate file\n");
+      
+      bytes_left = f_size - position;
+      
+      if(bytes_left > 0)
+      {
+        sanity = 1;
+        /* don't read past the EOF, just right up to it */
+        if(nrbytes > bytes_left) nrbytes = bytes_left;
+      }
+    }
+
+    if(sanity)
+    {
+      //r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
+      r = OK;
+      /******   R/W for immediate   ******/
+      if(rw_flag == READING){
+        r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
+      } 
+      else {
+        r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
+        IN_MARKDIRTY(rip);
+      }
+
+      if(r == OK)
+      {
+        cum_io += nrbytes;
+        position += nrbytes;
+        /* no more bytes left to read */
+        nrbytes = 0;
+      }
+    }
+
+  }// end [modify]
 
   /* If this is block i/o, check we can write */
   if(block_spec && rw_flag == WRITING &&
   	(dev_t) rip->i_zone[0] == superblock.s_dev && superblock.s_rd_only)
 		return EROFS;
 	      
-  cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes > 0) {
 	  off = ((unsigned int) position) % block_size; /* offset in blk*/
