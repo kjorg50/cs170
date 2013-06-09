@@ -556,18 +556,19 @@ off_t newsize;			/* inode must become this size */
       if((rip->i_mode & I_TYPE) == I_IMMEDIATE)
       { // if we need to change it to an immediate file
         if(newsize > 32){
-          char tmp[32];
+          char izone_data[32];
           register int i;
           register struct buf *bp;
 
           for(i = 0; i < rip->i_size; i++)
           {
-            tmp[i] = *(((char *)rip->i_zone) + i);
+            izone_data[i] = *(((char *)rip->i_zone) + i);
           }
 
           rip->i_update = ATIME | CTIME | MTIME;	
           IN_MARKDIRTY(rip);
-          for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
+          for (i = 0; i < V2_NR_TZONES; i++)
+            {    rip->i_zone[i] = NO_ZONE; }
 
     	  if ((bp = new_block(rip, (off_t) 0)) == NULL)
     			  panic("bp caused error in truncate_inode immediate growth");
@@ -575,7 +576,7 @@ off_t newsize;			/* inode must become this size */
           /* copy data to b_data */
     	  for(i = 0; i < rip->i_size; i++)
           {
-            b_data(bp)[i] = tmp[i];
+            b_data(bp)[i] = izone_data[i];
           }
 
           MARKDIRTY(bp);

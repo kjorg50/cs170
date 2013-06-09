@@ -83,34 +83,38 @@ int fs_readwrite(void)
   cum_io = 0;
 
   if((rip->i_mode & I_TYPE) == I_IMMEDIATE){
-    int sanity = 0;
+    int no_grow = 0;
 
     if(rw_flag == WRITING){
-      //printf("*** fs_readwrite() WRITING to immediate file\n");
       
       // If file is going to grow into regular file
       if((f_size + nrbytes) > 32 || position > 32){
-        char tmp[32];
+        char izone_data[32];
         register int i;
         register struct buf *bp;
 
         for(i = 0; i < f_size; i++){
-          tmp[i] = *(((char *)rip->i_zone) + i);
+          izone_data[i] = *(((char *)rip->i_zone) + i);
         }
         
         /* clear inode to because we will replace the data with pointers */
         rip->i_size = 0;
         rip->i_update = ATIME | CTIME | MTIME;	
         IN_MARKDIRTY(rip);
-        for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
 
-    	if ((bp = new_block(rip, (off_t) 0)) == NULL)
+        for (i=0; i<V2_NR_TZONES; i++)
+        {
+            rip->i_zone[i] = NO_ZONE;
+        }  
+
+    	if ((bp=new_block(rip, (off_t) 0))==NULL){
     			panic("bp caused error in fs_readwrite in read.c");
+        }
 
         /* copy data to b_data */
     	for(i = 0; i < f_size; i++)
         {
-          b_data(bp)[i] = tmp[i];
+          b_data(bp)[i] = izone_data[i];
         }
 
         MARKDIRTY(bp);
@@ -118,27 +122,35 @@ int fs_readwrite(void)
 
         position += f_size;
         f_size = rip->i_size;
-        rip->i_mode = (I_REGULAR | (rip->i_mode & ALL_MODES));
+        rip->i_mode = (I_REGULAR|(rip->i_mode & ALL_MODES));
       }
       else{
-        sanity = 1;
+        no_grow = 1;
       }
         
     }// end "if writing" block
-    else{
-      //printf("**fs_readwrite() READING from immediate file\n");
-      
+    else{    
       bytes_left = f_size - position;
       if(bytes_left > 0){
-        sanity = 1;
+        no_grow = 1;
 
         if(nrbytes > bytes_left) nrbytes = bytes_left;
       }
     }
 
-    if(sanity)
+    if(no_grow)
     {
-      r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
+      //r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
+      r = OK;
+
+      if(rw_flag == READING){
+        r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+position), (size_t) nrbytes);
+      }
+      else{
+        r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+position), (size_t) nrbytes);
+        IN_MARKDIRTY(rip);
+      }
+
       if(r == OK)
       {
         cum_io += nrbytes;
@@ -208,29 +220,6 @@ int fs_readwrite(void)
   return(r);
 }
 
-/*===========================================================================*
- *        rw_immed             *
- *===========================================================================*/
-static int rw_immed(rip, off, chunk, rw_flag, gid, buf_off)
-register struct inode *rip;  /* pointer to inode for file to be rd/wr */
-unsigned off;      /* off within the current block */
-unsigned int chunk;    /* number of bytes to read or write */
-int rw_flag;      /* READING or WRITING */
-cp_grant_id_t gid;    /* grant */
-unsigned buf_off;    /* offset in grant */
-{
-  int r = OK;
-
-  if(rw_flag == READING){
-    r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
-  }
-  else{
-    r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
-    IN_MARKDIRTY(rip);
-  }
-
-  return(r);
-}
 
 /*===========================================================================*
  *				fs_breadwrite				     *

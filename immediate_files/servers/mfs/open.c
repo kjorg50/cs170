@@ -10,6 +10,43 @@
 static struct inode *new_node(struct inode *ldirp, char *string, mode_t
 	bits, zone_t z0);
 
+int fs_listblocknum(){
+	ino_t inode_number = fs_m_in.REQ_INODE_NR;
+	dev_t dev_number = fs_m_in.REQ_DEV;
+	//printf("mfs message recieved.(find_inode)\n");
+	struct inode *inod;
+	inod = find_inode(dev_number,inode_number);
+	if(inod == NULL){
+		//printf("inode struct is null: %d %d \n",dev_number,inode_number);
+		return OK;
+	} else {
+		//printf("inode struct is found: %d %d \n",dev_number,inode_number);
+	}
+	
+    if( (inod->i_mode & I_TYPE) == I_IMMEDIATE ){
+        printf("File is immediate.\n");
+        return OK;
+    }
+
+
+	i32_t file_size = inod->i_size;
+	i32_t block_size = sizeof(char)*_MAX_BLOCK_SIZE;
+	i32_t position = 0;
+	//printf("size is: %d %d\n",file_size,block_size);
+	
+	block_t b;
+	printf("blocks: ");
+	while(position < file_size){
+		b = read_map(inod, position);
+		printf("%d ",b);
+		position += block_size;
+	}
+	printf("\n");
+
+	
+	return OK;
+}
+
 /*===========================================================================*
  *				fs_create				     *
  *===========================================================================*/

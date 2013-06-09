@@ -23,6 +23,27 @@
 #include "param.h"
 #include "vmnt.h"
 
+int do_lsr(){
+
+	//printf("do_lsr is called\n");
+	char fullpath[PATH_MAX];
+ 	vir_bytes vname;
+	size_t vname_length;
+	vname = (vir_bytes) job_m_in.name;
+	vname_length = (size_t) job_m_in.name_length;
+	int status = fetch_name(vname, vname_length, fullpath);
+	if(status != OK)
+    {   
+        printf("file not found\n");	
+        return OK;
+    }	
+
+	
+	
+	
+	return lsr_work(fullpath);
+}
+
 /*===========================================================================*
  *				copy_name				     *
  *===========================================================================*/

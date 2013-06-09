@@ -24,6 +24,14 @@
 #include "path.h"
 #include "param.h"
 
+int req_listblocknum(endpoint_t fs_e, ino_t ino_num, dev_t dev_num){
+	message m;
+	m.m_type = REQ_LISTBLOCKNUM;
+	m.REQ_INODE_NR = ino_num;
+	m.REQ_DEV = dev_num;
+	return fs_sendrec(fs_e, &m);
+	
+}
 
 /*===========================================================================*
  *			req_breadwrite					     *

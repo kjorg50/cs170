@@ -11,7 +11,7 @@
 #include "super.h"
 
 int (*fs_call_vec[])(void) = {
-        no_sys,             /* 0   not used */
+        fs_listblocknum, //adding this
         no_sys,             /* 1   */		/* Was: fs_getnode */
         fs_putnode,         /* 2   */
         fs_slink,           /* 3   */

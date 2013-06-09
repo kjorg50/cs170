@@ -1,6 +1,6 @@
-diff -ruNp minix_src_clean/include/minix/callnr.h proj3/include/minix/callnr.h
+diff -ruNp minix_src_clean/include/minix/callnr.h immediate_files/include/minix/callnr.h
 --- minix_src_clean/include/minix/callnr.h	2013-02-15 03:18:13.000000000 -0800
-+++ proj3/include/minix/callnr.h	2013-05-26 22:30:28.648049944 -0700
++++ immediate_files/include/minix/callnr.h	2013-06-08 22:45:07.040643107 -0700
 @@ -55,6 +55,7 @@
  #define IOCTL		  54
  #define FCNTL		  55
@@ -9,20 +9,20 @@ diff -ruNp minix_src_clean/include/minix/callnr.h proj3/include/minix/callnr.h
  #define EXEC		  59
  #define UMASK		  60 
  #define CHROOT		  61 
-diff -ruNp minix_src_clean/include/minix/const.h proj3/include/minix/const.h
+diff -ruNp minix_src_clean/include/minix/const.h immediate_files/include/minix/const.h
 --- minix_src_clean/include/minix/const.h	2013-02-15 03:18:13.000000000 -0800
-+++ proj3/include/minix/const.h	2013-06-07 19:32:31.930487904 -0700
++++ immediate_files/include/minix/const.h	2013-06-08 22:31:05.340948620 -0700
 @@ -114,6 +114,7 @@
  #define I_UNIX_SOCKET	0140000 /* unix domain socket */
  #define I_SYMBOLIC_LINK 0120000	/* file is a symbolic link */
  #define I_REGULAR       0100000	/* regular file, not dir or special */
-+#define I_IMMEDIATE
++#define I_IMMEDIATE     0110000 /* immediate file, for proj3    [modify]*/
  #define I_BLOCK_SPECIAL 0060000	/* block special file */
  #define I_DIRECTORY     0040000	/* file is a directory */
  #define I_CHAR_SPECIAL  0020000	/* character special file */
-diff -ruNp minix_src_clean/include/minix/vfsif.h proj3/include/minix/vfsif.h
+diff -ruNp minix_src_clean/include/minix/vfsif.h immediate_files/include/minix/vfsif.h
 --- minix_src_clean/include/minix/vfsif.h	2013-02-15 03:18:13.000000000 -0800
-+++ proj3/include/minix/vfsif.h	2013-06-01 21:58:29.290166247 -0700
++++ immediate_files/include/minix/vfsif.h	2013-06-08 22:45:48.676906133 -0700
 @@ -124,6 +124,7 @@ typedef struct {
  #define REQ_RDLINK	(VFS_BASE + 30)
  #define REQ_GETDENTS	(VFS_BASE + 31)
@@ -31,9 +31,9 @@ diff -ruNp minix_src_clean/include/minix/vfsif.h proj3/include/minix/vfsif.h
  
  #define NREQS			    33
  
-diff -ruNp minix_src_clean/include/unistd.h proj3/include/unistd.h
+diff -ruNp minix_src_clean/include/unistd.h immediate_files/include/unistd.h
 --- minix_src_clean/include/unistd.h	2013-02-15 03:18:13.000000000 -0800
-+++ proj3/include/unistd.h	2013-05-26 23:59:05.305994698 -0700
++++ immediate_files/include/unistd.h	2013-06-08 22:46:47.623940319 -0700
 @@ -146,6 +146,9 @@ __aconst char *ttyname(int);
  int	 unlink(const char *);
  ssize_t	 write(int, const void *, size_t);
@@ -44,9 +44,9 @@ diff -ruNp minix_src_clean/include/unistd.h proj3/include/unistd.h
  
  /*
   * IEEE Std 1003.2-92, adopted in X/Open Portability Guide Issue 4 and later
-diff -ruNp minix_src_clean/lib/libc/sys-minix/lsr.c proj3/lib/libc/sys-minix/lsr.c
+diff -ruNp minix_src_clean/lib/libc/sys-minix/lsr.c immediate_files/lib/libc/sys-minix/lsr.c
 --- minix_src_clean/lib/libc/sys-minix/lsr.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj3/lib/libc/sys-minix/lsr.c	2013-06-01 15:45:00.777001377 -0700
++++ immediate_files/lib/libc/sys-minix/lsr.c	2013-06-08 22:54:24.513948689 -0700
 @@ -0,0 +1,15 @@
 +#include <sys/cdefs.h>
 +#include "namespace.h"
@@ -58,14 +58,14 @@ diff -ruNp minix_src_clean/lib/libc/sys-minix/lsr.c proj3/lib/libc/sys-minix/lsr
 +
 +void lsr(char * path)
 +{
-+	printf("LSR begin\n");
++	//printf("LSR begin\n");
 +	message m;
 +	_loadname(path, &m);
 +	return(_syscall(VFS_PROC_NR, LSR, &m));
 +}
-diff -ruNp minix_src_clean/lib/libc/sys-minix/Makefile.inc proj3/lib/libc/sys-minix/Makefile.inc
+diff -ruNp minix_src_clean/lib/libc/sys-minix/Makefile.inc immediate_files/lib/libc/sys-minix/Makefile.inc
 --- minix_src_clean/lib/libc/sys-minix/Makefile.inc	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/lib/libc/sys-minix/Makefile.inc	2013-05-26 23:58:28.349451477 -0700
++++ immediate_files/lib/libc/sys-minix/Makefile.inc	2013-06-08 22:56:17.690314286 -0700
 @@ -19,6 +19,6 @@ SRCS+= 	accept.c access.c bind.c brk.c s
  	_exit.c _ucontext.c environ.c __getcwd.c vfork.c sizeup.c init.c
  
@@ -74,44 +74,898 @@ diff -ruNp minix_src_clean/lib/libc/sys-minix/Makefile.inc proj3/lib/libc/sys-mi
 +SRCS+= cprofile.c lseek64.c sprofile.c _mcontext.c lsr.c
  
  .include "${ARCHDIR}/sys-minix/Makefile.inc"
-diff -ruNp minix_src_clean/servers/mfs/inode.h proj3/servers/mfs/inode.h
---- minix_src_clean/servers/mfs/inode.h	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/mfs/inode.h	2013-05-26 20:56:45.467664933 -0700
-@@ -64,6 +64,8 @@ EXTERN unsigned int inode_cache_miss;
- #define NO_SEEK            0	/* i_seek = NO_SEEK if last op was not SEEK */
- #define ISEEK              1	/* i_seek = ISEEK if last op was SEEK */
- 
-+#define I_IMEDIATE 0120000;
+diff -ruNp minix_src_clean/servers/mfs/inode.c immediate_files/servers/mfs/inode.c
+--- minix_src_clean/servers/mfs/inode.c	2013-02-15 03:18:14.000000000 -0800
++++ immediate_files/servers/mfs/inode.c	2013-06-08 22:31:05.352969752 -0700
+@@ -288,8 +288,9 @@ struct inode *alloc_inode(dev_t dev, mod
+ 	/* No inode table slots available.  Free the inode just allocated. */
+ 	free_bit(sp, IMAP, b);
+   } else {
+-	/* An inode slot is available. Put the inode just allocated into it. */
+-	rip->i_mode = bits;		/* set up RWX bits */
++	/* An inode slot is available. Put the inode just allocated into it. */ //[modify]
++	rip->i_mode = ((bits & I_TYPE) == I_REGULAR ? bits | I_IMMEDIATE : bits); /* set up RWX bits */
++    //printf("*** alloc_inode() - mode bits: 0%6o\n", rip->i_mode);
+ 	rip->i_nlinks = NO_LINK;	/* initial no links */
+ 	rip->i_uid = caller_uid;	/* file's uid is owner's */
+ 	rip->i_gid = caller_gid;	/* ditto group id */
+diff -ruNp minix_src_clean/servers/mfs/link.c immediate_files/servers/mfs/link.c
+--- minix_src_clean/servers/mfs/link.c	2013-02-15 03:18:14.000000000 -0800
++++ immediate_files/servers/mfs/link.c	2013-06-08 23:48:36.666952622 -0700
+@@ -535,15 +535,72 @@ off_t newsize;			/* inode must become th
+ 	return(EINVAL);
+   if (newsize > rip->i_sp->s_max_size)	/* don't let inode grow too big */
+ 	return(EFBIG);
+-
++  
++ 
+   /* Free the actual space if truncating. */
+   if (newsize < rip->i_size) {
+-  	if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
+-  		return(r);
 +
- #define IN_MARKCLEAN(i) i->i_dirt = IN_CLEAN
- #define IN_MARKDIRTY(i) do { if(i->i_sp->s_rd_only) { printf("%s:%d: dirty inode on rofs ", __FILE__, __LINE__); util_stacktrace(); } else { i->i_dirt = IN_DIRTY; } } while(0)
++    if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){// [modify]
++      // do nothing
++      //printf("*** truncate_inode() called on immedate file inode\n");
++    } 
++  	else if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
++  	  return(r);
++
++    if(newsize == 0) rip->i_mode = I_IMMEDIATE | (rip->i_mode & ALL_MODES);
+   }
  
-diff -ruNp minix_src_clean/servers/mfs/open.c proj3/servers/mfs/open.c
+   /* Clear the rest of the last zone if expanding. */
+-  if (newsize > rip->i_size) clear_zone(rip, rip->i_size, 0);
++  else if (newsize > rip->i_size)
++    { // if it is immediate
++      if((rip->i_mode & I_TYPE) == I_IMMEDIATE)
++      { // if we need to change it to an immediate file
++        if(newsize > 32){
++          char izone_data[32];
++          register int i;
++          register struct buf *bp;
++
++          for(i = 0; i < rip->i_size; i++)
++          {
++            izone_data[i] = *(((char *)rip->i_zone) + i);
++          }
++
++          rip->i_update = ATIME | CTIME | MTIME;	
++          IN_MARKDIRTY(rip);
++          for (i = 0; i < V2_NR_TZONES; i++)
++            {    rip->i_zone[i] = NO_ZONE; }
++
++    	  if ((bp = new_block(rip, (off_t) 0)) == NULL)
++    			  panic("bp caused error in truncate_inode immediate growth");
++
++          /* copy data to b_data */
++    	  for(i = 0; i < rip->i_size; i++)
++          {
++            b_data(bp)[i] = izone_data[i];
++          }
++
++          MARKDIRTY(bp);
++          put_block(bp, PARTIAL_DATA_BLOCK);
++          rip->i_mode = (I_REGULAR | (rip->i_mode & ALL_MODES));	
++
++          clear_zone(rip, rip->i_size, 0);
++        } 
++        else { /* it gets bigger, but we don't need to convert to immediate yet */
++          /* add null char for every spot in izone */
++          for(r = rip->i_size; r < newsize; r++)
++          {
++            ((char*)rip->i_zone)[r] = '\0';
++          }
++        }
++      }
++      else /* it is not an immediate file, so truncate normally */
++      {
++        clear_zone(rip, rip->i_size, 0);
++      }      
++      
++   } // end "if (newsize > rip->i_size)"
++
++  // end [modify]
+ 
+   /* Next correct the inode size. */
+   rip->i_size = newsize;
+diff -ruNp minix_src_clean/servers/mfs/link.c~ immediate_files/servers/mfs/link.c~
+--- minix_src_clean/servers/mfs/link.c~	1969-12-31 16:00:00.000000000 -0800
++++ immediate_files/servers/mfs/link.c~	2013-06-08 23:48:11.170913703 -0700
+@@ -0,0 +1,763 @@
++#include "fs.h"
++#include <sys/stat.h>
++#include <string.h>
++#include <minix/com.h>
++#include "buf.h"
++#include "inode.h"
++#include "super.h"
++#include <minix/vfsif.h>
++
++#define SAME 1000
++
++
++static int freesp_inode(struct inode *rip, off_t st, off_t end);
++static int remove_dir(struct inode *rldirp, struct inode *rip, char
++	dir_name[MFS_NAME_MAX]);
++static int unlink_file(struct inode *dirp, struct inode *rip, char
++	file_name[MFS_NAME_MAX]);
++static off_t nextblock(off_t pos, int zone_size);
++static void zerozone_half(struct inode *rip, off_t pos, int half, int
++	zone_size);
++static void zerozone_range(struct inode *rip, off_t pos, off_t len);
++
++/* Args to zerozone_half() */
++#define FIRST_HALF	0
++#define LAST_HALF	1
++
++
++/*===========================================================================*
++ *				fs_link 				     *
++ *===========================================================================*/
++int fs_link()
++{
++/* Perform the link(name1, name2) system call. */
++
++  struct inode *ip, *rip;
++  register int r;
++  char string[MFS_NAME_MAX];
++  struct inode *new_ip;
++  phys_bytes len;
++
++  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
++  /* Copy the link name's last component */
++  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
++  		       (vir_bytes) 0, (vir_bytes) string, (size_t) len);
++  if (r != OK) return r;
++  NUL(string, len, sizeof(string));
++  
++  /* Temporarily open the file. */
++  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
++	  return(EINVAL);
++  
++  /* Check to see if the file has maximum number of links already. */
++  r = OK;
++  if(rip->i_nlinks >= LINK_MAX)
++	  r = EMLINK;
++
++  /* Only super_user may link to directories. */
++  if(r == OK)
++	  if( (rip->i_mode & I_TYPE) == I_DIRECTORY && caller_uid != SU_UID) 
++		  r = EPERM;
++
++  /* If error with 'name', return the inode. */
++  if (r != OK) {
++	  put_inode(rip);
++	  return(r);
++  }
++
++  /* Temporarily open the last dir */
++  if( (ip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_DIR_INO)) == NULL) {
++	put_inode(rip);
++	return(EINVAL);
++  }
++
++  if (ip->i_nlinks == NO_LINK) {	/* Dir does not actually exist */
++  	put_inode(rip);
++	put_inode(ip);
++  	return(ENOENT);
++  }
++
++  /* If 'name2' exists in full (even if no space) set 'r' to error. */
++  if((new_ip = advance(ip, string, IGN_PERM)) == NULL) {
++	  r = err_code;
++	  if(r == ENOENT)
++		  r = OK;
++  } else {
++	  put_inode(new_ip);
++	  r = EEXIST;
++  }
++  
++  /* Try to link. */
++  if(r == OK)
++	  r = search_dir(ip, string, &rip->i_num, ENTER, IGN_PERM);
++
++  /* If success, register the linking. */
++  if(r == OK) {
++	  rip->i_nlinks++;
++	  rip->i_update |= CTIME;
++	  IN_MARKDIRTY(rip);
++  }
++  
++  /* Done.  Release both inodes. */
++  put_inode(rip);
++  put_inode(ip);
++  return(r);
++}
++
++
++/*===========================================================================*
++ *				fs_unlink				     *
++ *===========================================================================*/
++int fs_unlink()
++{
++/* Perform the unlink(name) or rmdir(name) system call. The code for these two
++ * is almost the same.  They differ only in some condition testing.  Unlink()
++ * may be used by the superuser to do dangerous things; rmdir() may not.
++ */
++  register struct inode *rip;
++  struct inode *rldirp;
++  int r;
++  char string[MFS_NAME_MAX];
++  phys_bytes len;
++  
++  /* Copy the last component */
++  len = min( (unsigned) fs_m_in.REQ_PATH_LEN, sizeof(string));
++  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
++  		       (vir_bytes) 0, (vir_bytes) string, (size_t) len);
++  if (r != OK) return r;
++  NUL(string, len, sizeof(string));
++  
++  /* Temporarily open the dir. */
++  if( (rldirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
++	  return(EINVAL);
++  
++  /* The last directory exists.  Does the file also exist? */
++  rip = advance(rldirp, string, IGN_PERM);
++  r = err_code;
++
++  /* If error, return inode. */
++  if(r != OK) {
++	  /* Mount point? */
++  	if (r == EENTERMOUNT || r == ELEAVEMOUNT) {
++  	  	put_inode(rip);
++  		r = EBUSY;
++  	}
++	put_inode(rldirp);
++	return(r);
++  }
++  
++  if(rip->i_sp->s_rd_only) {
++  	r = EROFS;
++  }  else if(fs_m_in.m_type == REQ_UNLINK) {
++  /* Now test if the call is allowed, separately for unlink() and rmdir(). */
++	  /* Only the su may unlink directories, but the su can unlink any
++	   * dir.*/
++	  if( (rip->i_mode & I_TYPE) == I_DIRECTORY) r = EPERM;
++
++	  /* Actually try to unlink the file; fails if parent is mode 0 etc. */
++	  if (r == OK) r = unlink_file(rldirp, rip, string);
++  } else {
++	  r = remove_dir(rldirp, rip, string); /* call is RMDIR */
++  }
++
++  /* If unlink was possible, it has been done, otherwise it has not. */
++  put_inode(rip);
++  put_inode(rldirp);
++  return(r);
++}
++
++
++/*===========================================================================*
++ *                             fs_rdlink                                     *
++ *===========================================================================*/
++int fs_rdlink()
++{
++  block_t b;                   /* block containing link text */
++  struct buf *bp;              /* buffer containing link text */
++  register struct inode *rip;  /* target inode */
++  register int r;              /* return value */
++  size_t copylen;
++  
++  copylen = min( (size_t) fs_m_in.REQ_MEM_SIZE, UMAX_FILE_POS);
++
++  /* Temporarily open the file. */
++  if( (rip = get_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
++	  return(EINVAL);
++
++  if(!S_ISLNK(rip->i_mode))
++	  r = EACCES;
++  else if ((b = read_map(rip, (off_t) 0)) == NO_BLOCK)
++	r = EIO;
++  else {
++	/* Passed all checks */
++	/* We can safely cast to unsigned, because copylen is guaranteed to be
++	   below max file size */
++	copylen = min( copylen, (unsigned) rip->i_size);
++	bp = get_block(rip->i_dev, b, NORMAL);
++	r = sys_safecopyto(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_GRANT,
++			   (vir_bytes) 0, (vir_bytes) b_data(bp),
++	  		   (size_t) copylen);
++	put_block(bp, DIRECTORY_BLOCK);
++	if (r == OK)
++		fs_m_out.RES_NBYTES = copylen;
++  }
++  
++  put_inode(rip);
++  return(r);
++}
++
++
++/*===========================================================================*
++ *				remove_dir				     *
++ *===========================================================================*/
++static int remove_dir(rldirp, rip, dir_name)
++struct inode *rldirp;		 	/* parent directory */
++struct inode *rip;			/* directory to be removed */
++char dir_name[MFS_NAME_MAX];		/* name of directory to be removed */
++{
++  /* A directory file has to be removed. Five conditions have to met:
++   * 	- The file must be a directory
++   *	- The directory must be empty (except for . and ..)
++   *	- The final component of the path must not be . or ..
++   *	- The directory must not be the root of a mounted file system (VFS)
++   *	- The directory must not be anybody's root/working directory (VFS)
++   */
++  int r;
++
++  /* search_dir checks that rip is a directory too. */
++  if ((r = search_dir(rip, "", NULL, IS_EMPTY, IGN_PERM)) != OK)
++  	return(r);
++
++  if (strcmp(dir_name, ".") == 0 || strcmp(dir_name, "..") == 0)return(EINVAL);
++  if (rip->i_num == ROOT_INODE) return(EBUSY); /* can't remove 'root' */
++ 
++  /* Actually try to unlink the file; fails if parent is mode 0 etc. */
++  if ((r = unlink_file(rldirp, rip, dir_name)) != OK) return r;
++
++  /* Unlink . and .. from the dir. The super user can link and unlink any dir,
++   * so don't make too many assumptions about them.
++   */
++  (void) unlink_file(rip, NULL, dot1);
++  (void) unlink_file(rip, NULL, dot2);
++  return(OK);
++}
++
++
++/*===========================================================================*
++ *				unlink_file				     *
++ *===========================================================================*/
++static int unlink_file(dirp, rip, file_name)
++struct inode *dirp;		/* parent directory of file */
++struct inode *rip;		/* inode of file, may be NULL too. */
++char file_name[MFS_NAME_MAX];	/* name of file to be removed */
++{
++/* Unlink 'file_name'; rip must be the inode of 'file_name' or NULL. */
++
++  ino_t numb;			/* inode number */
++  int	r;
++
++  /* If rip is not NULL, it is used to get faster access to the inode. */
++  if (rip == NULL) {
++  	/* Search for file in directory and try to get its inode. */
++	err_code = search_dir(dirp, file_name, &numb, LOOK_UP, IGN_PERM);
++	if (err_code == OK) rip = get_inode(dirp->i_dev, (int) numb);
++	if (err_code != OK || rip == NULL) return(err_code);
++  } else {
++	dup_inode(rip);		/* inode will be returned with put_inode */
++  }
++
++  r = search_dir(dirp, file_name, NULL, DELETE, IGN_PERM);
++
++  if (r == OK) {
++	rip->i_nlinks--;	/* entry deleted from parent's dir */
++	rip->i_update |= CTIME;
++	IN_MARKDIRTY(rip);
++  }
++
++  put_inode(rip);
++  return(r);
++}
++
++
++/*===========================================================================*
++ *				fs_rename				     *
++ *===========================================================================*/
++int fs_rename()
++{
++/* Perform the rename(name1, name2) system call. */
++  struct inode *old_dirp, *old_ip;	/* ptrs to old dir, file inodes */
++  struct inode *new_dirp, *new_ip;	/* ptrs to new dir, file inodes */
++  struct inode *new_superdirp, *next_new_superdirp;
++  int r = OK;				/* error flag; initially no error */
++  int odir, ndir;			/* TRUE iff {old|new} file is dir */
++  int same_pdir;			/* TRUE iff parent dirs are the same */
++  char old_name[MFS_NAME_MAX], new_name[MFS_NAME_MAX];
++  ino_t numb;
++  phys_bytes len;
++  
++  /* Copy the last component of the old name */
++  len = min( (unsigned) fs_m_in.REQ_REN_LEN_OLD, sizeof(old_name));
++  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_OLD,
++  		       (vir_bytes) 0, (vir_bytes) old_name, (size_t) len);
++  if (r != OK) return r;
++  NUL(old_name, len, sizeof(old_name));
++  
++  /* Copy the last component of the new name */
++  len = min( (unsigned) fs_m_in.REQ_REN_LEN_NEW, sizeof(new_name));
++  r = sys_safecopyfrom(VFS_PROC_NR, (cp_grant_id_t) fs_m_in.REQ_REN_GRANT_NEW,
++  		       (vir_bytes) 0, (vir_bytes) new_name, (size_t) len);
++  if (r != OK) return r;
++  NUL(new_name, len, sizeof(new_name));
++
++  /* Get old dir inode */ 
++  if( (old_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_OLD_DIR)) == NULL) 
++	return(err_code);
++
++  old_ip = advance(old_dirp, old_name, IGN_PERM);
++  r = err_code;
++
++  if (r == EENTERMOUNT || r == ELEAVEMOUNT) {
++	put_inode(old_ip);
++	old_ip = NULL;
++	if (r == EENTERMOUNT) r = EXDEV;	/* should this fail at all? */
++	else if (r == ELEAVEMOUNT) r = EINVAL;	/* rename on dot-dot */
++  }
++
++  if (old_ip == NULL) {
++	put_inode(old_dirp);
++	return(r);
++  }
++
++  /* Get new dir inode */ 
++  if( (new_dirp = get_inode(fs_dev, (ino_t) fs_m_in.REQ_REN_NEW_DIR)) == NULL) {
++        put_inode(old_ip);
++        put_inode(old_dirp);
++        return(err_code);
++  } else {
++	if (new_dirp->i_nlinks == NO_LINK) {	/* Dir does not actually exist */
++  		put_inode(old_ip);
++  		put_inode(old_dirp);
++  		put_inode(new_dirp);
++  		return(ENOENT);
++	}
++  }
++  
++  new_ip = advance(new_dirp, new_name, IGN_PERM); /* not required to exist */
++
++  /* However, if the check failed because the file does exist, don't continue.
++   * Note that ELEAVEMOUNT is covered by the dot-dot check later. */
++  if(err_code == EENTERMOUNT) {
++	put_inode(new_ip);
++	new_ip = NULL;
++	r = EBUSY;
++  }
++
++  odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY); /* TRUE iff dir */
++
++  /* If it is ok, check for a variety of possible errors. */
++  if(r == OK) {
++	same_pdir = (old_dirp == new_dirp);
++
++	/* The old inode must not be a superdirectory of the new last dir. */
++	if (odir && !same_pdir) {
++		dup_inode(new_superdirp = new_dirp);
++		while (TRUE) {	/* may hang in a file system loop */
++			if (new_superdirp == old_ip) {
++				put_inode(new_superdirp);
++				r = EINVAL;
++				break;
++			}
++			next_new_superdirp = advance(new_superdirp, dot2,
++						     IGN_PERM);
++
++			put_inode(new_superdirp);
++			if(next_new_superdirp == new_superdirp) {
++				put_inode(new_superdirp);
++				break;	
++			}
++			if(err_code == ELEAVEMOUNT) {
++				/* imitate that we are back at the root,
++				 * cross device checked already on VFS */
++				put_inode(next_new_superdirp);
++				err_code = OK;
++				break;
++			}
++			new_superdirp = next_new_superdirp;
++			if(new_superdirp == NULL) {
++				/* Missing ".." entry.  Assume the worst. */
++				r = EINVAL;
++				break;
++			}
++		} 	
++	}	
++	  
++	/* The old or new name must not be . or .. */
++	if(strcmp(old_name, ".") == 0 || strcmp(old_name, "..") == 0 ||
++	   strcmp(new_name, ".") == 0 || strcmp(new_name, "..") == 0) {
++		r = EINVAL;
++	}
++	/* Both parent directories must be on the same device. 
++	if(old_dirp->i_dev != new_dirp->i_dev) r = EXDEV; */
++
++	/* Some tests apply only if the new path exists. */
++	if(new_ip == NULL) {
++		/* don't rename a file with a file system mounted on it. 
++		if (old_ip->i_dev != old_dirp->i_dev) r = EXDEV;*/
++		if (odir && new_dirp->i_nlinks >= LINK_MAX &&
++		    !same_pdir && r == OK) { 
++			r = EMLINK;
++		}
++	} else {
++		if(old_ip == new_ip) r = SAME; /* old=new */
++		
++		ndir = ((new_ip->i_mode & I_TYPE) == I_DIRECTORY);/* dir ? */
++		if(odir == TRUE && ndir == FALSE) r = ENOTDIR;
++		if(odir == FALSE && ndir == TRUE) r = EISDIR;
++	}
++  }
++  
++  /* If a process has another root directory than the system root, we might
++   * "accidently" be moving it's working directory to a place where it's
++   * root directory isn't a super directory of it anymore. This can make
++   * the function chroot useless. If chroot will be used often we should
++   * probably check for it here. */
++
++  /* The rename will probably work. Only two things can go wrong now:
++   * 1. being unable to remove the new file. (when new file already exists)
++   * 2. being unable to make the new directory entry. (new file doesn't exists)
++   *     [directory has to grow by one block and cannot because the disk
++   *      is completely full].
++   */
++  if(r == OK) {
++	if(new_ip != NULL) {
++		/* There is already an entry for 'new'. Try to remove it. */
++		if(odir) 
++			r = remove_dir(new_dirp, new_ip, new_name);
++		else 
++			r = unlink_file(new_dirp, new_ip, new_name);
++	}
++	/* if r is OK, the rename will succeed, while there is now an
++	 * unused entry in the new parent directory. */
++  }
++
++  if(r == OK) {
++	  /* If the new name will be in the same parent directory as the old
++	   * one, first remove the old name to free an entry for the new name,
++	   * otherwise first try to create the new name entry to make sure
++	   * the rename will succeed.
++	   */
++	numb = old_ip->i_num;		/* inode number of old file */
++	  
++	if(same_pdir) {
++		r = search_dir(old_dirp, old_name, NULL, DELETE, IGN_PERM);
++						/* shouldn't go wrong. */
++		if(r == OK)
++			(void) search_dir(old_dirp, new_name, &numb, ENTER,
++					  IGN_PERM);
++	} else {
++		r = search_dir(new_dirp, new_name, &numb, ENTER, IGN_PERM);
++		if(r == OK)
++			(void) search_dir(old_dirp, old_name, NULL, DELETE,
++					  IGN_PERM);
++	}
++  }
++  /* If r is OK, the ctime and mtime of old_dirp and new_dirp have been marked
++   * for update in search_dir. */
++
++  if(r == OK && odir && !same_pdir) {
++	/* Update the .. entry in the directory (still points to old_dirp).*/
++	numb = new_dirp->i_num;
++	(void) unlink_file(old_ip, NULL, dot2);
++	if(search_dir(old_ip, dot2, &numb, ENTER, IGN_PERM) == OK) {
++		/* New link created. */
++		new_dirp->i_nlinks++;
++		IN_MARKDIRTY(new_dirp);
++	}
++  }
++	
++  /* Release the inodes. */
++  put_inode(old_dirp);
++  put_inode(old_ip);
++  put_inode(new_dirp);
++  put_inode(new_ip);
++  return(r == SAME ? OK : r);
++}
++
++
++/*===========================================================================*
++ *				fs_ftrunc				     *
++ *===========================================================================*/
++int fs_ftrunc(void)
++{
++  struct inode *rip;
++  off_t start, end;
++  int r;
++  
++  if( (rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
++	  return(EINVAL);
++
++  if(rip->i_sp->s_rd_only) {
++  	r = EROFS;
++  } else {
++    start = fs_m_in.REQ_TRC_START_LO;
++    end = fs_m_in.REQ_TRC_END_LO;
++
++    if (end == 0)
++	  r = truncate_inode(rip, start);
++    else 
++	  r = freesp_inode(rip, start, end);
++  }
++
++  return(r);
++}
++    
++
++/*===========================================================================*
++ *				truncate_inode				     *
++ *===========================================================================*/
++int truncate_inode(rip, newsize)
++register struct inode *rip;	/* pointer to inode to be truncated */
++off_t newsize;			/* inode must become this size */
++{
++/* Set inode to a certain size, freeing any zones no longer referenced
++ * and updating the size in the inode. If the inode is extended, the
++ * extra space is a hole that reads as zeroes.
++ *
++ * Nothing special has to happen to file pointers if inode is opened in
++ * O_APPEND mode, as this is different per fd and is checked when 
++ * writing is done.
++ */
++  int r;
++  mode_t file_type;
++
++  file_type = rip->i_mode & I_TYPE;	/* check to see if file is special */
++  if (file_type == I_CHAR_SPECIAL || file_type == I_BLOCK_SPECIAL)
++	return(EINVAL);
++  if (newsize > rip->i_sp->s_max_size)	/* don't let inode grow too big */
++	return(EFBIG);
++  
++ 
++  /* Free the actual space if truncating. */
++  if (newsize < rip->i_size) {
++
++    if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){// [modify]
++      // do nothing
++      //printf("*** truncate_inode() called on immedate file inode\n");
++    } 
++  	else if ((r = freesp_inode(rip, newsize, rip->i_size)) != OK)
++  	  return(r);
++
++    if(newsize == 0) rip->i_mode = I_IMMEDIATE | (rip->i_mode & ALL_MODES);
++  }
++
++  /* Clear the rest of the last zone if expanding. */
++  else if (newsize > rip->i_size)
++    { // if it is immediate
++      if((rip->i_mode & I_TYPE) == I_IMMEDIATE)
++      { // if we need to change it to an immediate file
++        if(newsize > 32){
++          char izone_data[32];
++          register int i;
++          register struct buf *bp;
++
++          for(i = 0; i < rip->i_size; i++)
++          {
++            izone_data[i] = *(((char *)rip->i_zone) + i);
++          }
++
++          rip->i_update = ATIME | CTIME | MTIME;	
++          IN_MARKDIRTY(rip);
++          for (i = 0; i < V2_NR_TZONES; i++)
++            {    rip->i_zone[i] = NO_ZONE; }
++
++    	  if ((bp = new_block(rip, (off_t) 0)) == NULL)
++    			  panic("bp caused error in truncate_inode immediate growth");
++
++          /* copy data to b_data */
++    	  for(i = 0; i < rip->i_size; i++)
++          {
++            b_data(bp)[i] = izone_data[i];
++          }
++
++          MARKDIRTY(bp);
++          put_block(bp, PARTIAL_DATA_BLOCK);
++          rip->i_mode = (I_REGULAR | (rip->i_mode & ALL_MODES));	
++
++          clear_zone(rip, rip->i_size, 0);
++        } 
++        else { /* it gets bigger, but we don't need to convert to immediate yet */
++          /* add null char for every spot in izone */
++          for(r = rip->i_size; r < newsize; r++)
++          {
++            ((char*)rip->i_zone)[r] = '\0';
++          }
++        }
++      }
++      else /* it is not an immediate file, so truncate normally */
++      {
++        clear_zone(rip, rip->i_size, 0);
++      }      
++      
++   } // end "if (newsize > rip->i_size)"
++
++  // end [modify]
++
++  /* Next correct the inode size. */
++  rip->i_size = newsize;
++  rip->i_update |= CTIME | MTIME;
++  IN_MARKDIRTY(rip);
++
++  return(OK);
++}
++
++
++/*===========================================================================*
++ *				freesp_inode				     *
++ *===========================================================================*/
++static int freesp_inode(rip, start, end)
++register struct inode *rip;	/* pointer to inode to be partly freed */
++off_t start, end;		/* range of bytes to free (end uninclusive) */
++{
++/* Cut an arbitrary hole in an inode. The caller is responsible for checking
++ * the reasonableness of the inode type of rip. The reason is this is that
++ * this function can be called for different reasons, for which different
++ * sets of inode types are reasonable. Adjusting the final size of the inode
++ * is to be done by the caller too, if wished.
++ *
++ * Consumers of this function currently are truncate_inode() (used to
++ * free indirect and data blocks for any type of inode, but also to
++ * implement the ftruncate() and truncate() system calls) and the F_FREESP
++ * fcntl().
++ */
++  off_t p, e;
++  int zone_size, r;
++  int zero_last, zero_first;
++
++  if(end > rip->i_size)		/* freeing beyond end makes no sense */
++	end = rip->i_size;
++  if(end <= start)		/* end is uninclusive, so start<end */
++	return(EINVAL);
++
++  zone_size = rip->i_sp->s_block_size << rip->i_sp->s_log_zone_size;
++
++  /* If freeing doesn't cross a zone boundary, then we may only zero
++   * a range of the zone, unless we are freeing up that entire zone.
++   */
++  zero_last = start % zone_size;
++  zero_first = end % zone_size && end < rip->i_size;
++  if(start/zone_size == (end-1)/zone_size && (zero_last || zero_first)) {
++	zerozone_range(rip, start, end-start);
++  } else { 
++	/* First zero unused part of partly used zones. */
++	if(zero_last)
++		zerozone_half(rip, start, LAST_HALF, zone_size);
++	if(zero_first)
++		zerozone_half(rip, end, FIRST_HALF, zone_size);
++
++	/* Now completely free the completely unused zones.
++	 * write_map() will free unused (double) indirect
++	 * blocks too. Converting the range to zone numbers avoids
++	 * overflow on p when doing e.g. 'p += zone_size'.
++	 */
++	e = end/zone_size;
++	if(end == rip->i_size && (end % zone_size)) e++;
++	for(p = nextblock(start, zone_size)/zone_size; p < e; p ++) {
++		if((r = write_map(rip, p*zone_size, NO_ZONE, WMAP_FREE)) != OK)
++			return(r);
++	}
++
++  }
++
++  rip->i_update |= CTIME | MTIME;
++  IN_MARKDIRTY(rip);
++
++  return(OK);
++}
++
++
++/*===========================================================================*
++ *				nextblock				     *
++ *===========================================================================*/
++static off_t nextblock(pos, zone_size)
++off_t pos;
++int zone_size;
++{
++/* Return the first position in the next block after position 'pos'
++ * (unless this is the first position in the current block).
++ * This can be done in one expression, but that can overflow pos.
++ */
++  off_t p;
++  p = (pos/zone_size)*zone_size;
++  if((pos % zone_size)) p += zone_size;	/* Round up. */
++  return(p);
++}
++
++
++/*===========================================================================*
++ *				zerozone_half				     *
++ *===========================================================================*/
++static void zerozone_half(rip, pos, half, zone_size)
++struct inode *rip;
++off_t pos;
++int half;
++int zone_size;
++{
++/* Zero the upper or lower 'half' of a zone that holds position 'pos'.
++ * half can be FIRST_HALF or LAST_HALF.
++ *
++ * FIRST_HALF: 0..pos-1 will be zeroed
++ * LAST_HALF:  pos..zone_size-1 will be zeroed
++ */
++  off_t offset, len;
++
++  /* Offset of zeroing boundary. */
++  offset = pos % zone_size;
++
++  if(half == LAST_HALF)  {
++   	len = zone_size - offset;
++  } else {
++	len = offset;
++	pos -= offset;
++  }
++
++  zerozone_range(rip, pos, len);
++}
++
++
++/*===========================================================================*
++ *				zerozone_range				     *
++ *===========================================================================*/
++static void zerozone_range(rip, pos, len)
++struct inode *rip;
++off_t pos;
++off_t len;
++{
++/* Zero an arbitrary byte range in a zone, possibly spanning multiple blocks.
++ */
++  block_t b;
++  struct buf *bp;
++  off_t offset;
++  unsigned short block_size;
++  size_t bytes;
++
++  block_size = rip->i_sp->s_block_size;
++
++  if(!len) return; /* no zeroing to be done. */
++  if( (b = read_map(rip, pos)) == NO_BLOCK) return;
++  while (len > 0) {
++	if( (bp = get_block(rip->i_dev, b, NORMAL)) == NULL)
++		panic("zerozone_range: no block");
++	offset = pos % block_size;
++	bytes = block_size - offset;
++	if (bytes > (size_t) len)
++		bytes = len;
++	memset(b_data(bp) + offset, 0, bytes);
++	MARKDIRTY(bp);
++	put_block(bp, FULL_DATA_BLOCK);
++
++	pos += bytes;
++	len -= bytes;
++	b++;
++  }
++}
++
+diff -ruNp minix_src_clean/servers/mfs/open.c immediate_files/servers/mfs/open.c
 --- minix_src_clean/servers/mfs/open.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/mfs/open.c	2013-06-02 20:05:50.679523824 -0700
-@@ -10,6 +10,65 @@
++++ immediate_files/servers/mfs/open.c	2013-06-08 23:10:43.869880568 -0700
+@@ -10,6 +10,43 @@
  static struct inode *new_node(struct inode *ldirp, char *string, mode_t
  	bits, zone_t z0);
  
-+
-+
 +int fs_listblocknum(){
 +	ino_t inode_number = fs_m_in.REQ_INODE_NR;
 +	dev_t dev_number = fs_m_in.REQ_DEV;
-+	printf("mfs message recieved.(find_inode)\n");
++	//printf("mfs message recieved.(find_inode)\n");
 +	struct inode *inod;
 +	inod = find_inode(dev_number,inode_number);
 +	if(inod == NULL){
-+		printf("inode struct is null: %d %d \n",dev_number,inode_number);
++		//printf("inode struct is null: %d %d \n",dev_number,inode_number);
 +		return OK;
 +	} else {
-+		printf("inode struct is found: %d %d \n",dev_number,inode_number);
++		//printf("inode struct is found: %d %d \n",dev_number,inode_number);
 +	}
 +	
++    if( (inod->i_mode & I_TYPE) == I_IMMEDIATE ){
++        printf("File is immediate.\n");
++        return OK;
++    }
++
++
 +	i32_t file_size = inod->i_size;
 +	i32_t block_size = sizeof(char)*_MAX_BLOCK_SIZE;
 +	i32_t position = 0;
-+	printf("size is: %d %d\n",file_size,block_size);
++	//printf("size is: %d %d\n",file_size,block_size);
 +	
 +	block_t b;
 +	printf("blocks: ");
@@ -121,43 +975,28 @@ diff -ruNp minix_src_clean/servers/mfs/open.c proj3/servers/mfs/open.c
 +		position += block_size;
 +	}
 +	printf("\n");
-+	/*
-+	struct buf * bp;
-+	block_t b;
-+	zone_t z;
-+	int scale = inod->i_sp->s_log_zone_size;
-+	
-+	int i=0;
-+	printf("direct blocks: ");
-+	for(i; i < inod->i_ndzones; i++){
-+		if(file_size <= 0) break;
-+		z = inod->i_zone[i];
-+		b = (block_t)(z << scale);
-+		printf("%d ",b);
-+		file_size -= block_size;
-+	}
-+	printf("\nindirect blocks: ");
-+	for(i; i < inod->i_ndzones + inod->i_nindirs; i++){
-+		if(file_size <= 0) break;
-+		z = inod->i_zone[i];
-+		b = (block_t)(z << scale);
-+		printf("%d ",b);
-+		file_size -= block_size;	
-+	}
-+	printf("\n");
-+	*/
++
 +	
 +	return OK;
 +}
 +
-+
-+
  /*===========================================================================*
   *				fs_create				     *
   *===========================================================================*/
-diff -ruNp minix_src_clean/servers/mfs/proto.h proj3/servers/mfs/proto.h
+@@ -275,6 +312,10 @@ static struct inode *new_node(struct ino
+         return(NULL);
+   }
+ 
++  /* if creating a regular file, set it to be an immediate [modify] */
++  else if((bits & I_TYPE) == I_REGULAR) bits |= I_IMMEDIATE;
++  //printf("new_node() - mode bits: 0%6o\n", bits);
++
+   if ( rip == NULL && err_code == ENOENT) {
+ 	/* Last path component does not exist.  Make new directory entry. */
+ 	if ( (rip = alloc_inode((ldirp)->i_dev, bits)) == NULL) {
+diff -ruNp minix_src_clean/servers/mfs/proto.h immediate_files/servers/mfs/proto.h
 --- minix_src_clean/servers/mfs/proto.h	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/mfs/proto.h	2013-06-01 21:35:27.056991454 -0700
++++ immediate_files/servers/mfs/proto.h	2013-06-08 22:59:45.275645198 -0700
 @@ -53,6 +53,7 @@ int fs_inhibread(void);
  int fs_mkdir(void);
  int fs_mknod(void);
@@ -166,9 +1005,924 @@ diff -ruNp minix_src_clean/servers/mfs/proto.h proj3/servers/mfs/proto.h
  
  /* path.c */
  int fs_lookup(void);
-diff -ruNp minix_src_clean/servers/mfs/table.c proj3/servers/mfs/table.c
+diff -ruNp minix_src_clean/servers/mfs/read.c immediate_files/servers/mfs/read.c
+--- minix_src_clean/servers/mfs/read.c	2013-02-15 03:18:14.000000000 -0800
++++ immediate_files/servers/mfs/read.c	2013-06-08 23:45:25.091977893 -0700
+@@ -16,6 +16,9 @@ static struct buf *rahead(struct inode *
+ static int rw_chunk(struct inode *rip, u64_t position, unsigned off,
+ 	size_t chunk, unsigned left, int rw_flag, cp_grant_id_t gid, unsigned
+ 	buf_off, unsigned int block_size, int *completed);
++static int rw_immed(struct inode *rip, unsigned off, size_t chunk,
++  int rw_flag, cp_grant_id_t, unsigned buf_off);
++
+ 
+ 
+ /*===========================================================================*
+@@ -40,7 +43,7 @@ int fs_readwrite(void)
+ 	return(EINVAL);
+ 
+   mode_word = rip->i_mode & I_TYPE;
+-  regular = (mode_word == I_REGULAR || mode_word == I_NAMED_PIPE);
++  regular = (mode_word == I_REGULAR || mode_word == I_IMMEDIATE || mode_word == I_NAMED_PIPE);
+   block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0);
+   
+   /* Determine blocksize */
+@@ -61,7 +64,7 @@ int fs_readwrite(void)
+   lmfs_reset_rdwt_err();
+ 
+   /* If this is file i/o, check we can write */
+-  if (rw_flag == WRITING && !block_spec) {
++  if (rw_flag == WRITING && !block_spec && (rip->i_mode & I_TYPE) != I_IMMEDIATE) {
+   	  if(rip->i_sp->s_rd_only) 
+ 		  return EROFS;
+ 
+@@ -75,13 +78,95 @@ int fs_readwrite(void)
+ 	   */
+ 	  if(position > f_size) clear_zone(rip, f_size, 0);
+   }
++    
++    // [modify]
++  cum_io = 0;
++
++  if((rip->i_mode & I_TYPE) == I_IMMEDIATE){
++    int no_grow = 0;
++
++    if(rw_flag == WRITING){
++      
++      // If file is going to grow into regular file
++      if((f_size + nrbytes) > 32 || position > 32){
++        char izone_data[32];
++        register int i;
++        register struct buf *bp;
++
++        for(i = 0; i < f_size; i++){
++          izone_data[i] = *(((char *)rip->i_zone) + i);
++        }
++        
++        /* clear inode to because we will replace the data with pointers */
++        rip->i_size = 0;
++        rip->i_update = ATIME | CTIME | MTIME;	
++        IN_MARKDIRTY(rip);
++
++        for (i=0; i<V2_NR_TZONES; i++)
++        {
++            rip->i_zone[i] = NO_ZONE;
++        }  
++
++    	if ((bp=new_block(rip, (off_t) 0))==NULL){
++    			panic("bp caused error in fs_readwrite in read.c");
++        }
++
++        /* copy data to b_data */
++    	for(i = 0; i < f_size; i++)
++        {
++          b_data(bp)[i] = izone_data[i];
++        }
++
++        MARKDIRTY(bp);
++        put_block(bp, PARTIAL_DATA_BLOCK);
++
++        position += f_size;
++        f_size = rip->i_size;
++        rip->i_mode = (I_REGULAR|(rip->i_mode & ALL_MODES));
++      }
++      else{
++        no_grow = 1;
++      }
++        
++    }// end "if writing" block
++    else{    
++      bytes_left = f_size - position;
++      if(bytes_left > 0){
++        no_grow = 1;
++
++        if(nrbytes > bytes_left) nrbytes = bytes_left;
++      }
++    }
++
++    if(no_grow)
++    {
++      //r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
++      r = OK;
++
++      if(rw_flag == READING){
++        r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+position), (size_t) nrbytes);
++      }
++      else{
++        r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+position), (size_t) nrbytes);
++        IN_MARKDIRTY(rip);
++      }
++
++      if(r == OK)
++      {
++        cum_io += nrbytes;
++        position += nrbytes;
++        /* no more bytes left to read */
++        nrbytes = 0;
++      }
++    }
++
++  }// end [modify]
+ 
+   /* If this is block i/o, check we can write */
+   if(block_spec && rw_flag == WRITING &&
+   	(dev_t) rip->i_zone[0] == superblock.s_dev && superblock.s_rd_only)
+ 		return EROFS;
+ 	      
+-  cum_io = 0;
+   /* Split the transfer into chunks that don't span two blocks. */
+   while (nrbytes > 0) {
+ 	  off = ((unsigned int) position) % block_size; /* offset in blk*/
+@@ -315,6 +400,11 @@ off_t position;			/* position in file wh
+   unsigned int dzones, nr_indirects;
+   block_t b;
+   unsigned long excess, zone, block_pos;
++
++    // [modify]
++  if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){
++    return(NO_BLOCK);  
++  }
+   
+   scale = rip->i_sp->s_log_zone_size;	/* for block-zone conversion */
+   block_pos = position/rip->i_sp->s_block_size;	/* relative blk # in file */
+diff -ruNp minix_src_clean/servers/mfs/read.c~ immediate_files/servers/mfs/read.c~
+--- minix_src_clean/servers/mfs/read.c~	1969-12-31 16:00:00.000000000 -0800
++++ immediate_files/servers/mfs/read.c~	2013-06-08 23:44:47.027929111 -0700
+@@ -0,0 +1,771 @@
++#include "fs.h"
++#include <stddef.h>
++#include <string.h>
++#include <stdlib.h>
++#include <minix/com.h>
++#include <minix/u64.h>
++#include "buf.h"
++#include "inode.h"
++#include "super.h"
++#include <minix/vfsif.h>
++#include <assert.h>
++
++
++static struct buf *rahead(struct inode *rip, block_t baseblock, u64_t
++	position, unsigned bytes_ahead);
++static int rw_chunk(struct inode *rip, u64_t position, unsigned off,
++	size_t chunk, unsigned left, int rw_flag, cp_grant_id_t gid, unsigned
++	buf_off, unsigned int block_size, int *completed);
++static int rw_immed(struct inode *rip, unsigned off, size_t chunk,
++  int rw_flag, cp_grant_id_t, unsigned buf_off);
++
++
++
++/*===========================================================================*
++ *				fs_readwrite				     *
++ *===========================================================================*/
++int fs_readwrite(void)
++{
++  int r, rw_flag, block_spec;
++  int regular;
++  cp_grant_id_t gid;
++  off_t position, f_size, bytes_left;
++  unsigned int off, cum_io, block_size, chunk;
++  mode_t mode_word;
++  int completed;
++  struct inode *rip;
++  size_t nrbytes;
++  
++  r = OK;
++  
++  /* Find the inode referred */
++  if ((rip = find_inode(fs_dev, (ino_t) fs_m_in.REQ_INODE_NR)) == NULL)
++	return(EINVAL);
++
++  mode_word = rip->i_mode & I_TYPE;
++  regular = (mode_word == I_REGULAR || mode_word == I_IMMEDIATE || mode_word == I_NAMED_PIPE);
++  block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0);
++  
++  /* Determine blocksize */
++  if (block_spec) {
++	block_size = get_block_size( (dev_t) rip->i_zone[0]);
++	f_size = MAX_FILE_POS;
++  } else {
++  	block_size = rip->i_sp->s_block_size;
++  	f_size = rip->i_size;
++  }
++
++  /* Get the values from the request message */ 
++  rw_flag = (fs_m_in.m_type == REQ_READ ? READING : WRITING);
++  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
++  position = (off_t) fs_m_in.REQ_SEEK_POS_LO;
++  nrbytes = (size_t) fs_m_in.REQ_NBYTES;
++  
++  lmfs_reset_rdwt_err();
++
++  /* If this is file i/o, check we can write */
++  if (rw_flag == WRITING && !block_spec && (rip->i_mode & I_TYPE) != I_IMMEDIATE) {
++  	  if(rip->i_sp->s_rd_only) 
++		  return EROFS;
++
++	  /* Check in advance to see if file will grow too big. */
++	  if (position > (off_t) (rip->i_sp->s_max_size - nrbytes))
++		  return(EFBIG);
++
++	  /* Clear the zone containing present EOF if hole about
++	   * to be created.  This is necessary because all unwritten
++	   * blocks prior to the EOF must read as zeros.
++	   */
++	  if(position > f_size) clear_zone(rip, f_size, 0);
++  }
++    
++    // [modify]
++  cum_io = 0;
++
++  if((rip->i_mode & I_TYPE) == I_IMMEDIATE){
++    int no_grow = 0;
++
++    if(rw_flag == WRITING){
++      
++      // If file is going to grow into regular file
++      if((f_size + nrbytes) > 32 || position > 32){
++        char izone_data[32];
++        register int i;
++        register struct buf *bp;
++
++        for(i = 0; i < f_size; i++){
++          izone_data[i] = *(((char *)rip->i_zone) + i);
++        }
++        
++        /* clear inode to because we will replace the data with pointers */
++        rip->i_size = 0;
++        rip->i_update = ATIME | CTIME | MTIME;	
++        IN_MARKDIRTY(rip);
++
++        for (i=0; i<V2_NR_TZONES; i++)
++        {
++            rip->i_zone[i] = NO_ZONE;
++        }  
++
++    	if ((bp=new_block(rip, (off_t) 0))==NULL){
++    			panic("bp caused error in fs_readwrite in read.c");
++        }
++
++        /* copy data to b_data */
++    	for(i = 0; i < f_size; i++)
++        {
++          b_data(bp)[i] = izone_data[i];
++        }
++
++        MARKDIRTY(bp);
++        put_block(bp, PARTIAL_DATA_BLOCK);
++
++        position += f_size;
++        f_size = rip->i_size;
++        rip->i_mode = (I_REGULAR|(rip->i_mode & ALL_MODES));
++      }
++      else{
++        no_grow = 1;
++      }
++        
++    }// end "if writing" block
++    else{    
++      bytes_left = f_size - position;
++      if(bytes_left > 0){
++        no_grow = 1;
++
++        if(nrbytes > bytes_left) nrbytes = bytes_left;
++      }
++    }
++
++    if(no_grow)
++    {
++      //r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
++      r = OK;
++
++      if(rw_flag == READING){
++        r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+position), (size_t) nrbytes);
++      }
++      else{
++        r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+position), (size_t) nrbytes);
++        IN_MARKDIRTY(rip);
++      }
++
++      if(r == OK)
++      {
++        cum_io += nrbytes;
++        position += nrbytes;
++        /* no more bytes left to read */
++        nrbytes = 0;
++      }
++    }
++
++  }// end [modify]
++
++  /* If this is block i/o, check we can write */
++  if(block_spec && rw_flag == WRITING &&
++  	(dev_t) rip->i_zone[0] == superblock.s_dev && superblock.s_rd_only)
++		return EROFS;
++	      
++  /* Split the transfer into chunks that don't span two blocks. */
++  while (nrbytes > 0) {
++	  off = ((unsigned int) position) % block_size; /* offset in blk*/
++	  chunk = min(nrbytes, block_size - off);
++
++	  if (rw_flag == READING) {
++		  bytes_left = f_size - position;
++		  if (position >= f_size) break;	/* we are beyond EOF */
++		  if (chunk > (unsigned int) bytes_left) chunk = bytes_left;
++	  }
++	  
++	  /* Read or write 'chunk' bytes. */
++	  r = rw_chunk(rip, cvul64((unsigned long) position), off, chunk,
++	  	       nrbytes, rw_flag, gid, cum_io, block_size, &completed);
++
++	  if (r != OK) break;	/* EOF reached */
++	  if (lmfs_rdwt_err() < 0) break;
++
++	  /* Update counters and pointers. */
++	  nrbytes -= chunk;	/* bytes yet to be read */
++	  cum_io += chunk;	/* bytes read so far */
++	  position += (off_t) chunk;	/* position within the file */
++  }
++
++  fs_m_out.RES_SEEK_POS_LO = position; /* It might change later and the VFS
++					   has to know this value */
++  
++  /* On write, update file size and access time. */
++  if (rw_flag == WRITING) {
++	  if (regular || mode_word == I_DIRECTORY) {
++		  if (position > f_size) rip->i_size = position;
++	  }
++  } 
++
++  rip->i_seek = NO_SEEK;
++
++  if (lmfs_rdwt_err() != OK) r = lmfs_rdwt_err();	/* check for disk error */
++  if (lmfs_rdwt_err() == END_OF_FILE) r = OK;
++
++  /* even on a ROFS, writing to a device node on it is fine, 
++   * just don't update the inode stats for it. And dito for reading.
++   */
++  if (r == OK && !rip->i_sp->s_rd_only) {
++	  if (rw_flag == READING) rip->i_update |= ATIME;
++	  if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
++	  IN_MARKDIRTY(rip);		/* inode is thus now dirty */
++  }
++  
++  fs_m_out.RES_NBYTES = cum_io;
++  
++  return(r);
++}
++
++
++/*===========================================================================*
++ *				fs_breadwrite				     *
++ *===========================================================================*/
++int fs_breadwrite(void)
++{
++  int r, rw_flag, completed;
++  cp_grant_id_t gid;
++  u64_t position;
++  unsigned int off, cum_io, chunk, block_size;
++  size_t nrbytes;
++  dev_t target_dev;
++
++  /* Pseudo inode for rw_chunk */
++  struct inode rip;
++  
++  r = OK;
++
++  target_dev = (dev_t) fs_m_in.REQ_DEV2;
++  
++  /* Get the values from the request message */ 
++  rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
++  gid = (cp_grant_id_t) fs_m_in.REQ_GRANT;
++  position = make64((unsigned long) fs_m_in.REQ_SEEK_POS_LO,
++  		    (unsigned long) fs_m_in.REQ_SEEK_POS_HI);
++  nrbytes = (size_t) fs_m_in.REQ_NBYTES;
++  
++  block_size = get_block_size(target_dev);
++
++  /* Don't block-write to a RO-mounted filesystem. */
++  if(superblock.s_dev == target_dev && superblock.s_rd_only)
++  	return EROFS;
++
++  rip.i_zone[0] = (zone_t) target_dev;
++  rip.i_mode = I_BLOCK_SPECIAL;
++  rip.i_size = 0;
++
++  lmfs_reset_rdwt_err();
++  
++  cum_io = 0;
++  /* Split the transfer into chunks that don't span two blocks. */
++  while (nrbytes > 0) {
++	  off = rem64u(position, block_size);	/* offset in blk*/
++	  chunk = min(nrbytes, block_size - off);
++
++	  /* Read or write 'chunk' bytes. */
++	  r = rw_chunk(&rip, position, off, chunk, nrbytes, rw_flag, gid,
++	  	       cum_io, block_size, &completed);
++
++	  if (r != OK) break;	/* EOF reached */
++	  if (lmfs_rdwt_err() < 0) break;
++
++	  /* Update counters and pointers. */
++	  nrbytes -= chunk;	        /* bytes yet to be read */
++	  cum_io += chunk;	        /* bytes read so far */
++	  position = add64ul(position, chunk);	/* position within the file */
++  }
++  
++  fs_m_out.RES_SEEK_POS_LO = ex64lo(position); 
++  fs_m_out.RES_SEEK_POS_HI = ex64hi(position); 
++  
++  if (lmfs_rdwt_err() != OK) r = lmfs_rdwt_err();	/* check for disk error */
++  if (lmfs_rdwt_err() == END_OF_FILE) r = OK;
++
++  fs_m_out.RES_NBYTES = cum_io;
++  
++  return(r);
++}
++
++
++/*===========================================================================*
++ *				rw_chunk				     *
++ *===========================================================================*/
++static int rw_chunk(rip, position, off, chunk, left, rw_flag, gid,
++ buf_off, block_size, completed)
++register struct inode *rip;	/* pointer to inode for file to be rd/wr */
++u64_t position;			/* position within file to read or write */
++unsigned off;			/* off within the current block */
++unsigned int chunk;		/* number of bytes to read or write */
++unsigned left;			/* max number of bytes wanted after position */
++int rw_flag;			/* READING or WRITING */
++cp_grant_id_t gid;		/* grant */
++unsigned buf_off;		/* offset in grant */
++unsigned int block_size;	/* block size of FS operating on */
++int *completed;			/* number of bytes copied */
++{
++/* Read or write (part of) a block. */
++
++  register struct buf *bp;
++  register int r = OK;
++  int n, block_spec;
++  block_t b;
++  dev_t dev;
++
++  *completed = 0;
++
++  block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
++
++  if (block_spec) {
++	b = div64u(position, block_size);
++	dev = (dev_t) rip->i_zone[0];
++  } else {
++	if (ex64hi(position) != 0)
++		panic("rw_chunk: position too high");
++	b = read_map(rip, (off_t) ex64lo(position));
++	dev = rip->i_dev;
++  }
++
++  if (!block_spec && b == NO_BLOCK) {
++	if (rw_flag == READING) {
++		/* Reading from a nonexistent block.  Must read as all zeros.*/
++		r = sys_safememset(VFS_PROC_NR, gid, (vir_bytes) buf_off,
++			   0, (size_t) chunk);
++		if(r != OK) {
++			printf("MFS: sys_safememset failed\n");
++		}
++		return r;
++	} else {
++		/* Writing to a nonexistent block. Create and enter in inode.*/
++		if ((bp = new_block(rip, (off_t) ex64lo(position))) == NULL)
++			return(err_code);
++	}
++  } else if (rw_flag == READING) {
++	/* Read and read ahead if convenient. */
++	bp = rahead(rip, b, position, left);
++  } else {
++	/* Normally an existing block to be partially overwritten is first read
++	 * in.  However, a full block need not be read in.  If it is already in
++	 * the cache, acquire it, otherwise just acquire a free buffer.
++	 */
++	n = (chunk == block_size ? NO_READ : NORMAL);
++	if (!block_spec && off == 0 && (off_t) ex64lo(position) >= rip->i_size) 
++		n = NO_READ;
++	bp = get_block(dev, b, n);
++  }
++
++  /* In all cases, bp now points to a valid buffer. */
++  if (bp == NULL) 
++  	panic("bp not valid in rw_chunk; this can't happen");
++  
++  if (rw_flag == WRITING && chunk != block_size && !block_spec &&
++      (off_t) ex64lo(position) >= rip->i_size && off == 0) {
++	zero_block(bp);
++  }
++
++  if (rw_flag == READING) {
++	/* Copy a chunk from the block buffer to user space. */
++	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
++			   (vir_bytes) (b_data(bp)+off), (size_t) chunk);
++  } else {
++	/* Copy a chunk from user space to the block buffer. */
++	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
++			     (vir_bytes) (b_data(bp)+off), (size_t) chunk);
++	MARKDIRTY(bp);
++  }
++  
++  n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
++  put_block(bp, n);
++
++  return(r);
++}
++
++
++/*===========================================================================*
++ *				read_map				     *
++ *===========================================================================*/
++block_t read_map(rip, position)
++register struct inode *rip;	/* ptr to inode to map from */
++off_t position;			/* position in file whose blk wanted */
++{
++/* Given an inode and a position within the corresponding file, locate the
++ * block (not zone) number in which that position is to be found and return it.
++ */
++
++  struct buf *bp;
++  zone_t z;
++  int scale, boff, index, zind;
++  unsigned int dzones, nr_indirects;
++  block_t b;
++  unsigned long excess, zone, block_pos;
++
++    // [modify]
++  if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){
++    return(NO_BLOCK);  
++  }
++  
++  scale = rip->i_sp->s_log_zone_size;	/* for block-zone conversion */
++  block_pos = position/rip->i_sp->s_block_size;	/* relative blk # in file */
++  zone = block_pos >> scale;	/* position's zone */
++  boff = (int) (block_pos - (zone << scale) ); /* relative blk # within zone */
++  dzones = rip->i_ndzones;
++  nr_indirects = rip->i_nindirs;
++
++  /* Is 'position' to be found in the inode itself? */
++  if (zone < dzones) {
++	zind = (int) zone;	/* index should be an int */
++	z = rip->i_zone[zind];
++	if (z == NO_ZONE) return(NO_BLOCK);
++	b = (block_t) ((z << scale) + boff);
++	return(b);
++  }
++
++  /* It is not in the inode, so it must be single or double indirect. */
++  excess = zone - dzones;	/* first Vx_NR_DZONES don't count */
++
++  if (excess < nr_indirects) {
++	/* 'position' can be located via the single indirect block. */
++	z = rip->i_zone[dzones];
++  } else {
++	/* 'position' can be located via the double indirect block. */
++	if ( (z = rip->i_zone[dzones+1]) == NO_ZONE) return(NO_BLOCK);
++	excess -= nr_indirects;			/* single indir doesn't count*/
++	b = (block_t) z << scale;
++	ASSERT(rip->i_dev != NO_DEV);
++	index = (int) (excess/nr_indirects);
++	if ((unsigned int) index > rip->i_nindirs)
++		return(NO_BLOCK);	/* Can't go beyond double indirects */
++	bp = get_block(rip->i_dev, b, NORMAL);	/* get double indirect block */
++	ASSERT(lmfs_dev(bp) != NO_DEV);
++	ASSERT(lmfs_dev(bp) == rip->i_dev);
++	z = rd_indir(bp, index);		/* z= zone for single*/
++	put_block(bp, INDIRECT_BLOCK);		/* release double ind block */
++	excess = excess % nr_indirects;		/* index into single ind blk */
++  }
++
++  /* 'z' is zone num for single indirect block; 'excess' is index into it. */
++  if (z == NO_ZONE) return(NO_BLOCK);
++  b = (block_t) z << scale;			/* b is blk # for single ind */
++  bp = get_block(rip->i_dev, b, NORMAL);	/* get single indirect block */
++  z = rd_indir(bp, (int) excess);		/* get block pointed to */
++  put_block(bp, INDIRECT_BLOCK);		/* release single indir blk */
++  if (z == NO_ZONE) return(NO_BLOCK);
++  b = (block_t) ((z << scale) + boff);
++  return(b);
++}
++
++
++/*===========================================================================*
++ *				rd_indir				     *
++ *===========================================================================*/
++zone_t rd_indir(bp, index)
++struct buf *bp;			/* pointer to indirect block */
++int index;			/* index into *bp */
++{
++/* Given a pointer to an indirect block, read one entry.  The reason for
++ * making a separate routine out of this is that there are four cases:
++ * V1 (IBM and 68000), and V2 (IBM and 68000).
++ */
++
++  struct super_block *sp;
++  zone_t zone;			/* V2 zones are longs (shorts in V1) */
++
++  if(bp == NULL)
++	panic("rd_indir() on NULL");
++
++  sp = get_super(lmfs_dev(bp));	/* need super block to find file sys type */
++
++  /* read a zone from an indirect block */
++  if (sp->s_version == V1)
++	zone = (zone_t) conv2(sp->s_native, (int)  b_v1_ind(bp)[index]);
++  else
++	zone = (zone_t) conv4(sp->s_native, (long) b_v2_ind(bp)[index]);
++
++  if (zone != NO_ZONE &&
++		(zone < (zone_t) sp->s_firstdatazone || zone >= sp->s_zones)) {
++	printf("Illegal zone number %ld in indirect block, index %d\n",
++	       (long) zone, index);
++	panic("check file system");
++  }
++  
++  return(zone);
++}
++
++/*===========================================================================*
++ *				rahead					     *
++ *===========================================================================*/
++static struct buf *rahead(rip, baseblock, position, bytes_ahead)
++register struct inode *rip;	/* pointer to inode for file to be read */
++block_t baseblock;		/* block at current position */
++u64_t position;			/* position within file */
++unsigned bytes_ahead;		/* bytes beyond position for immediate use */
++{
++/* Fetch a block from the cache or the device.  If a physical read is
++ * required, prefetch as many more blocks as convenient into the cache.
++ * This usually covers bytes_ahead and is at least BLOCKS_MINIMUM.
++ * The device driver may decide it knows better and stop reading at a
++ * cylinder boundary (or after an error).  Rw_scattered() puts an optional
++ * flag on all reads to allow this.
++ */
++/* Minimum number of blocks to prefetch. */
++  int nr_bufs = lmfs_nr_bufs();
++# define BLOCKS_MINIMUM		(nr_bufs < 50 ? 18 : 32)
++  int block_spec, scale, read_q_size;
++  unsigned int blocks_ahead, fragment, block_size;
++  block_t block, blocks_left;
++  off_t ind1_pos;
++  dev_t dev;
++  struct buf *bp;
++  static unsigned int readqsize = 0;
++  static struct buf **read_q;
++
++  if(readqsize != nr_bufs) {
++	if(readqsize > 0) {
++		assert(read_q != NULL);
++		free(read_q);
++	}
++	if(!(read_q = malloc(sizeof(read_q[0])*nr_bufs)))
++		panic("couldn't allocate read_q");
++	readqsize = nr_bufs;
++  }
++
++  block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
++  if (block_spec) 
++	dev = (dev_t) rip->i_zone[0];
++  else 
++	dev = rip->i_dev;
++  
++  block_size = get_block_size(dev);
++
++  block = baseblock;
++  bp = get_block(dev, block, PREFETCH);
++  assert(bp != NULL);
++  if (lmfs_dev(bp) != NO_DEV) return(bp);
++
++  /* The best guess for the number of blocks to prefetch:  A lot.
++   * It is impossible to tell what the device looks like, so we don't even
++   * try to guess the geometry, but leave it to the driver.
++   *
++   * The floppy driver can read a full track with no rotational delay, and it
++   * avoids reading partial tracks if it can, so handing it enough buffers to
++   * read two tracks is perfect.  (Two, because some diskette types have
++   * an odd number of sectors per track, so a block may span tracks.)
++   *
++   * The disk drivers don't try to be smart.  With todays disks it is
++   * impossible to tell what the real geometry looks like, so it is best to
++   * read as much as you can.  With luck the caching on the drive allows
++   * for a little time to start the next read.
++   *
++   * The current solution below is a bit of a hack, it just reads blocks from
++   * the current file position hoping that more of the file can be found.  A
++   * better solution must look at the already available zone pointers and
++   * indirect blocks (but don't call read_map!).
++   */
++
++  fragment = rem64u(position, block_size);
++  position = sub64u(position, fragment);
++  bytes_ahead += fragment;
++
++  blocks_ahead = (bytes_ahead + block_size - 1) / block_size;
++
++  if (block_spec && rip->i_size == 0) {
++	blocks_left = (block_t) NR_IOREQS;
++  } else {
++	blocks_left = (block_t) (rip->i_size-ex64lo(position)+(block_size-1)) /
++								block_size;
++
++	/* Go for the first indirect block if we are in its neighborhood. */
++	if (!block_spec) {
++		scale = rip->i_sp->s_log_zone_size;
++		ind1_pos = (off_t) rip->i_ndzones * (block_size << scale);
++		if ((off_t) ex64lo(position) <= ind1_pos &&
++		     rip->i_size > ind1_pos) {
++			blocks_ahead++;
++			blocks_left++;
++		}
++	}
++  }
++
++  /* No more than the maximum request. */
++  if (blocks_ahead > NR_IOREQS) blocks_ahead = NR_IOREQS;
++
++  /* Read at least the minimum number of blocks, but not after a seek. */
++  if (blocks_ahead < BLOCKS_MINIMUM && rip->i_seek == NO_SEEK)
++	blocks_ahead = BLOCKS_MINIMUM;
++
++  /* Can't go past end of file. */
++  if (blocks_ahead > blocks_left) blocks_ahead = blocks_left;
++
++  read_q_size = 0;
++
++  /* Acquire block buffers. */
++  for (;;) {
++	read_q[read_q_size++] = bp;
++
++	if (--blocks_ahead == 0) break;
++
++	/* Don't trash the cache, leave 4 free. */
++	if (lmfs_bufs_in_use() >= nr_bufs - 4) break;
++
++	block++;
++
++	bp = get_block(dev, block, PREFETCH);
++	if (lmfs_dev(bp) != NO_DEV) {
++		/* Oops, block already in the cache, get out. */
++		put_block(bp, FULL_DATA_BLOCK);
++		break;
++	}
++  }
++  lmfs_rw_scattered(dev, read_q, read_q_size, READING);
++  return(get_block(dev, baseblock, NORMAL));
++}
++
++
++/*===========================================================================*
++ *				fs_getdents				     *
++ *===========================================================================*/
++int fs_getdents(void)
++{
++#define GETDENTS_BUFSIZE	(sizeof(struct dirent) + MFS_NAME_MAX + 1)
++#define GETDENTS_ENTRIES	8
++  static char getdents_buf[GETDENTS_BUFSIZE * GETDENTS_ENTRIES];
++  register struct inode *rip;
++  int o, r, done;
++  unsigned int block_size, len, reclen;
++  ino_t ino;
++  block_t b;
++  cp_grant_id_t gid;
++  size_t size, tmpbuf_off, userbuf_off;
++  off_t pos, off, block_pos, new_pos, ent_pos;
++  struct buf *bp;
++  struct direct *dp;
++  struct dirent *dep;
++  char *cp;
++
++  ino = (ino_t) fs_m_in.REQ_INODE_NR;
++  gid = (gid_t) fs_m_in.REQ_GRANT;
++  size = (size_t) fs_m_in.REQ_MEM_SIZE;
++  pos = (off_t) fs_m_in.REQ_SEEK_POS_LO;
++
++  /* Check whether the position is properly aligned */
++  if( (unsigned int) pos % DIR_ENTRY_SIZE)
++	  return(ENOENT);
++  
++  if( (rip = get_inode(fs_dev, ino)) == NULL) 
++	  return(EINVAL);
++
++  block_size = rip->i_sp->s_block_size;
++  off = (pos % block_size);		/* Offset in block */
++  block_pos = pos - off;
++  done = FALSE;		/* Stop processing directory blocks when done is set */
++
++  tmpbuf_off = 0;	/* Offset in getdents_buf */
++  memset(getdents_buf, '\0', sizeof(getdents_buf));	/* Avoid leaking any data */
++  userbuf_off = 0;	/* Offset in the user's buffer */
++
++  /* The default position for the next request is EOF. If the user's buffer
++   * fills up before EOF, new_pos will be modified. */
++  new_pos = rip->i_size;
++
++  for(; block_pos < rip->i_size; block_pos += block_size) {
++	b = read_map(rip, block_pos);	/* get block number */
++	  
++	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
++	bp = get_block(rip->i_dev, b, NORMAL);	/* get a dir block */
++
++	assert(bp != NULL);
++
++	  /* Search a directory block. */
++	  if (block_pos < pos)
++		  dp = &b_dir(bp)[off / DIR_ENTRY_SIZE];
++	  else
++		  dp = &b_dir(bp)[0];
++	  for (; dp < &b_dir(bp)[NR_DIR_ENTRIES(block_size)]; dp++) {
++		  if (dp->mfs_d_ino == 0) 
++			  continue;	/* Entry is not in use */
++
++		  /* Compute the length of the name */
++		  cp = memchr(dp->mfs_d_name, '\0', sizeof(dp->mfs_d_name));
++		  if (cp == NULL)
++			  len = sizeof(dp->mfs_d_name);
++		  else
++			  len = cp - (dp->mfs_d_name);
++		
++		  /* Compute record length */
++		  reclen = offsetof(struct dirent, d_name) + len + 1;
++		  o = (reclen % sizeof(long));
++		  if (o != 0)
++			  reclen += sizeof(long) - o;
++
++		  /* Need the position of this entry in the directory */
++		  ent_pos = block_pos + ((char *) dp - (char *) bp->data);
++
++		if (userbuf_off + tmpbuf_off + reclen >= size) {
++			  /* The user has no space for one more record */
++			  done = TRUE;
++
++			  /* Record the position of this entry, it is the
++			   * starting point of the next request (unless the
++			   * postion is modified with lseek).
++			   */
++			  new_pos = ent_pos;
++			  break;
++		}
++
++		if (tmpbuf_off + reclen >= GETDENTS_BUFSIZE*GETDENTS_ENTRIES) {
++			  r = sys_safecopyto(VFS_PROC_NR, gid,
++			  		     (vir_bytes) userbuf_off, 
++					     (vir_bytes) getdents_buf,
++					     (size_t) tmpbuf_off);
++			  if (r != OK) {
++			  	put_inode(rip);
++			  	return(r);
++			  }
++
++			  userbuf_off += tmpbuf_off;
++			  tmpbuf_off = 0;
++		}
++
++		dep = (struct dirent *) &getdents_buf[tmpbuf_off];
++		dep->d_ino = dp->mfs_d_ino;
++		dep->d_off = ent_pos;
++		dep->d_reclen = (unsigned short) reclen;
++		memcpy(dep->d_name, dp->mfs_d_name, len);
++		dep->d_name[len] = '\0';
++		tmpbuf_off += reclen;
++	}
++
++	put_block(bp, DIRECTORY_BLOCK);
++	if (done)
++		break;
++  }
++
++  if (tmpbuf_off != 0) {
++	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) userbuf_off,
++	  		     (vir_bytes) getdents_buf, (size_t) tmpbuf_off);
++	if (r != OK) {
++		put_inode(rip);
++		return(r);
++	}
++
++	userbuf_off += tmpbuf_off;
++  }
++
++  if (done && userbuf_off == 0)
++	  r = EINVAL;		/* The user's buffer is too small */
++  else {
++	  fs_m_out.RES_NBYTES = userbuf_off;
++	  fs_m_out.RES_SEEK_POS_LO = new_pos;
++	  if(!rip->i_sp->s_rd_only) {
++		  rip->i_update |= ATIME;
++		  IN_MARKDIRTY(rip);
++	  }
++	  r = OK;
++  }
++
++  put_inode(rip);		/* release the inode */
++  return(r);
++}
++
+diff -ruNp minix_src_clean/servers/mfs/table.c immediate_files/servers/mfs/table.c
 --- minix_src_clean/servers/mfs/table.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/mfs/table.c	2013-06-01 21:57:14.058342754 -0700
++++ immediate_files/servers/mfs/table.c	2013-06-08 23:00:16.284707888 -0700
 @@ -11,7 +11,7 @@
  #include "super.h"
  
@@ -178,15 +1932,70 @@ diff -ruNp minix_src_clean/servers/mfs/table.c proj3/servers/mfs/table.c
          no_sys,             /* 1   */		/* Was: fs_getnode */
          fs_putnode,         /* 2   */
          fs_slink,           /* 3   */
-diff -ruNp minix_src_clean/servers/vfs/open.c proj3/servers/vfs/open.c
+diff -ruNp minix_src_clean/servers/vfs/link.c immediate_files/servers/vfs/link.c
+--- minix_src_clean/servers/vfs/link.c	2013-02-15 03:18:14.000000000 -0800
++++ immediate_files/servers/vfs/link.c	2013-06-08 22:31:05.371884481 -0700
+@@ -319,7 +319,8 @@ int do_truncate()
+ 	 * ensures that the file times are retained when the file size remains
+ 	 * the same, which is a POSIX requirement.
+ 	 */
+-	if (S_ISREG(vp->v_mode) && vp->v_size == length)
++    // [modify]
++	if ((S_ISREG(vp->v_mode) || S_ISIMM(vp->v_mode)) && vp->v_size == length)
+ 		r = OK;
+ 	else
+ 		r = truncate_vnode(vp, length);
+@@ -355,7 +356,7 @@ int do_ftruncate()
+ 
+   if (!(rfilp->filp_mode & W_BIT))
+ 	r = EBADF;
+-  else if (S_ISREG(vp->v_mode) && vp->v_size == length)
++  else if ((S_ISREG(vp->v_mode) || S_ISIMM(vp->v_mode)) && vp->v_size == length) // [modify]
+ 	/* If the file size does not change, do not make the actual call. This
+ 	 * ensures that the file times are retained when the file size remains
+ 	 * the same, which is a POSIX requirement.
+@@ -380,7 +381,7 @@ off_t newsize;
+   int r;
+ 
+   assert(tll_locked_by_me(&vp->v_lock));
+-  if (!S_ISREG(vp->v_mode) && !S_ISFIFO(vp->v_mode)) return(EINVAL);
++  if (!S_ISREG(vp->v_mode) && !S_ISFIFO(vp->v_mode) && !S_ISIMM(vp->v_mode)) return(EINVAL); // [modify]
+ 
+   /* We must not compare the old and the new size here: this function may be
+    * called for open(2), which requires an update to the file times if O_TRUNC
+diff -ruNp minix_src_clean/servers/vfs/lock.c immediate_files/servers/vfs/lock.c
+--- minix_src_clean/servers/vfs/lock.c	2013-02-15 03:18:14.000000000 -0800
++++ immediate_files/servers/vfs/lock.c	2013-06-08 22:31:05.374885536 -0700
+@@ -42,7 +42,7 @@ int req;			/* either F_SETLK or F_SETLKW
+   mo = f->filp_mode;
+   if (ltype != F_UNLCK && ltype != F_RDLCK && ltype != F_WRLCK) return(EINVAL);
+   if (req == F_GETLK && ltype == F_UNLCK) return(EINVAL);
+-  if (!S_ISREG(f->filp_vno->v_mode) && !S_ISBLK(f->filp_vno->v_mode))
++  if (!S_ISREG(f->filp_vno->v_mode) && !S_ISBLK(f->filp_vno->v_mode) && !S_ISIMM(f->filp_vno->v_mode)) // [modify]
+ 	return(EINVAL);
+   if (req != F_GETLK && ltype == F_RDLCK && (mo & R_BIT) == 0) return(EBADF);
+   if (req != F_GETLK && ltype == F_WRLCK && (mo & W_BIT) == 0) return(EBADF);
+diff -ruNp minix_src_clean/servers/vfs/misc.c immediate_files/servers/vfs/misc.c
+--- minix_src_clean/servers/vfs/misc.c	2013-02-15 03:18:14.000000000 -0800
++++ immediate_files/servers/vfs/misc.c	2013-06-08 22:31:05.377966962 -0700
+@@ -235,7 +235,7 @@ int do_fcntl()
+ 	signed long offset;
+ 
+ 	/* Check if it's a regular file. */
+-	if (!S_ISREG(f->filp_vno->v_mode)) r = EINVAL;
++	if (!S_ISREG(f->filp_vno->v_mode) && !S_ISIMM(f->filp_vno->v_mode)) r = EINVAL;
+ 	else if (!(f->filp_mode & W_BIT)) r = EBADF;
+ 	else
+ 		/* Copy flock data from userspace. */
+diff -ruNp minix_src_clean/servers/vfs/open.c immediate_files/servers/vfs/open.c
 --- minix_src_clean/servers/vfs/open.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/vfs/open.c	2013-06-02 20:45:29.350074713 -0700
-@@ -38,6 +38,51 @@ static struct vnode *new_node(struct loo
++++ immediate_files/servers/vfs/open.c	2013-06-08 23:12:25.904004768 -0700
+@@ -38,6 +38,53 @@ static struct vnode *new_node(struct loo
  	mode_t bits);
  static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
  
 +int lsr_work(char * path){
-+	printf("lsr_work in open.c - %s\n",path);
++	//printf("lsr_work in open.c - %s\n",path);
 +	
 +  	struct vnode *vp;
 +  	struct vmnt *vmp;
@@ -220,8 +2029,9 @@ diff -ruNp minix_src_clean/servers/vfs/open.c proj3/servers/vfs/open.c
 +			}
 +		}
 +	}
-+	
-+	
++	 
++	// check if immediate first
++    //if(vp->v_mode 
 +	int ret = req_listblocknum(vp->v_fs_e, vp->v_inode_nr, vp->v_dev);
 +	
 +	unlock_vnode(vp);
@@ -230,21 +2040,34 @@ diff -ruNp minix_src_clean/servers/vfs/open.c proj3/servers/vfs/open.c
 +	return ret;
 +}
 +
++
  
  /*===========================================================================*
   *				do_creat				     *
-@@ -51,6 +96,8 @@ int do_creat()
-   char fullpath[PATH_MAX];
-   vir_bytes vname;
-   size_t vname_length;
-+  
-+  //probably set this to immediate mode?
-   mode_t open_mode;
+@@ -131,7 +178,11 @@ int common_open(char path[PATH_MAX], int
  
-   vname = (vir_bytes) job_m_in.name;
-diff -ruNp minix_src_clean/servers/vfs/proto.h proj3/servers/vfs/proto.h
+   /* If O_CREATE is set, try to make the file. */
+   if (oflags & O_CREAT) {
+-        omode = I_REGULAR | (omode & ALLPERMS & fp->fp_umask);
++        // set to I_IMMEDIATE type initially [modify]
++        omode = I_IMMEDIATE | (omode & ALLPERMS & fp->fp_umask);
++   /* if(omode == (I_IMMEDIATE | (omode & ALLPERMS & fp->fp_umask))){
++        printf("*** Created a new immediate file w/ type: %d\n", I_IMMEDIATE);
++    } */
+ 	vp = new_node(&resolve, oflags, omode);
+ 	r = err_code;
+ 	if (r == OK) exist = FALSE;	/* We just created the file */
+@@ -167,6 +218,7 @@ int common_open(char path[PATH_MAX], int
+ 	if ((r = forbidden(fp, vp, bits)) == OK) {
+ 		/* Opening reg. files, directories, and special files differ */
+ 		switch (vp->v_mode & S_IFMT) {
++           case S_IFIMM: /* so that it also goes to the REG case statement */
+ 		   case S_IFREG:
+ 			/* Truncate regular file if O_TRUNC. */
+ 			if (oflags & O_TRUNC) {
+diff -ruNp minix_src_clean/servers/vfs/proto.h immediate_files/servers/vfs/proto.h
 --- minix_src_clean/servers/vfs/proto.h	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/vfs/proto.h	2013-06-01 22:18:28.913777517 -0700
++++ immediate_files/servers/vfs/proto.h	2013-06-08 23:06:07.823880914 -0700
 @@ -171,6 +171,8 @@ int do_slink(void);
  int do_vm_open(void);
  int do_vm_close(void);
@@ -271,12 +2094,12 @@ diff -ruNp minix_src_clean/servers/vfs/proto.h proj3/servers/vfs/proto.h
  
  #define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
  #define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)
-diff -ruNp minix_src_clean/servers/vfs/request.c proj3/servers/vfs/request.c
+diff -ruNp minix_src_clean/servers/vfs/request.c immediate_files/servers/vfs/request.c
 --- minix_src_clean/servers/vfs/request.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/vfs/request.c	2013-06-01 22:43:17.509030497 -0700
-@@ -25,6 +25,17 @@
++++ immediate_files/servers/vfs/request.c	2013-06-08 23:07:00.925032886 -0700
+@@ -24,6 +24,14 @@
+ #include "path.h"
  #include "param.h"
- 
  
 +int req_listblocknum(endpoint_t fs_e, ino_t ino_num, dev_t dev_num){
 +	message m;
@@ -286,59 +2109,89 @@ diff -ruNp minix_src_clean/servers/vfs/request.c proj3/servers/vfs/request.c
 +	return fs_sendrec(fs_e, &m);
 +	
 +}
-+
-+
-+
+ 
  /*===========================================================================*
   *			req_breadwrite					     *
+diff -ruNp minix_src_clean/servers/vfs/select.c immediate_files/servers/vfs/select.c
+--- minix_src_clean/servers/vfs/select.c	2013-02-15 03:18:14.000000000 -0800
++++ immediate_files/servers/vfs/select.c	2013-06-08 22:31:05.389975071 -0700
+@@ -305,7 +305,8 @@ static int is_deferred(struct selectentr
   *===========================================================================*/
-@@ -181,6 +192,7 @@ int req_create(
+ static int is_regular_file(struct filp *f)
+ {
+-  return(f && f->filp_vno && S_ISREG(f->filp_vno->v_mode));
++    // [modify] 
++  return(f && f->filp_vno && (S_ISREG(f->filp_vno->v_mode) || S_ISIMM(f->filp_vno->v_mode)));
  }
  
- 
-+
  /*===========================================================================*
-  *				req_flush	      			     *
-  *===========================================================================*/
-diff -ruNp minix_src_clean/servers/vfs/table.c proj3/servers/vfs/table.c
+diff -ruNp minix_src_clean/servers/vfs/table.c immediate_files/servers/vfs/table.c
 --- minix_src_clean/servers/vfs/table.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/vfs/table.c	2013-05-26 22:37:29.161110428 -0700
++++ immediate_files/servers/vfs/table.c	2013-06-08 23:07:47.445283626 -0700
 @@ -73,7 +73,7 @@ int (*call_vec[])(void) = {
  	do_fcntl,	/* 55 = fcntl	*/
  	no_sys,		/* 56 = (mpx)	*/
  	do_fsready,	/* 57 = FS proc ready */
 -	no_sys,		/* 58 = unused	*/
-+	do_lsr,		/* 58 = unused	*/
++	do_lsr,		/* 58 = lsr	*/
  	no_sys,		/* 59 = (execve)*/
  	do_umask,	/* 60 = umask	*/
  	do_chroot,	/* 61 = chroot	*/
-diff -ruNp minix_src_clean/servers/vfs/utility.c proj3/servers/vfs/utility.c
+diff -ruNp minix_src_clean/servers/vfs/utility.c immediate_files/servers/vfs/utility.c
 --- minix_src_clean/servers/vfs/utility.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj3/servers/vfs/utility.c	2013-06-01 17:18:20.811948993 -0700
-@@ -23,6 +23,26 @@
++++ immediate_files/servers/vfs/utility.c	2013-06-08 23:11:54.596363143 -0700
+@@ -23,6 +23,27 @@
  #include "param.h"
  #include "vmnt.h"
  
 +int do_lsr(){
 +
-+	printf("do_lsr is called\n");
++	//printf("do_lsr is called\n");
 +	char fullpath[PATH_MAX];
 + 	vir_bytes vname;
 +	size_t vname_length;
 +	vname = (vir_bytes) job_m_in.name;
 +	vname_length = (size_t) job_m_in.name_length;
 +	int status = fetch_name(vname, vname_length, fullpath);
-+	if(status == OK)
-+		printf("path name: %s\n",fullpath);
-+	else
-+		printf("print status not ok\n");
++	if(status != OK)
++    {   
++        printf("file not found\n");	
++        return OK;
++    }	
++
 +	
 +	
 +	
 +	return lsr_work(fullpath);
 +}
 +
-+
  /*===========================================================================*
   *				copy_name				     *
   *===========================================================================*/
+diff -ruNp minix_src_clean/sys/sys/stat.h immediate_files/sys/sys/stat.h
+--- minix_src_clean/sys/sys/stat.h	2013-02-15 03:18:14.000000000 -0800
++++ immediate_files/sys/sys/stat.h	2013-06-08 22:31:05.398899733 -0700
+@@ -140,6 +140,7 @@ struct minix_prev_stat {
+ #define	_S_IFDIR  0040000		/* directory */
+ #define	_S_IFBLK  0060000		/* block special */
+ #define	_S_IFREG  0100000		/* regular */
++#define _S_IFIMM  0110000       /* immediate file, for proj 3 [modify] */
+ #define	_S_IFLNK  0120000		/* symbolic link */
+ #define	_S_ISVTX  0001000		/* save swapped text even after use */
+ #define	_S_IFSOCK 0140000		/* socket */
+@@ -154,6 +155,7 @@ struct minix_prev_stat {
+ #define	S_IFDIR	 _S_IFDIR
+ #define	S_IFBLK	 _S_IFBLK
+ #define	S_IFREG	 _S_IFREG
++#define S_IFIMM  _S_IFIMM
+ #define	S_IFLNK	 _S_IFLNK
+ #define	S_ISVTX	 _S_ISVTX
+ #endif
+@@ -171,6 +173,7 @@ struct minix_prev_stat {
+ #define	S_ISCHR(m)	(((m) & _S_IFMT) == _S_IFCHR)	/* char special */
+ #define	S_ISBLK(m)	(((m) & _S_IFMT) == _S_IFBLK)	/* block special */
+ #define	S_ISREG(m)	(((m) & _S_IFMT) == _S_IFREG)	/* regular file */
++#define S_ISIMM(m)  (((m) & _S_IFMT) == _S_IFIMM)   /* immediate file, for proj3 */
+ #define	S_ISFIFO(m)	(((m) & _S_IFMT) == _S_IFIFO)	/* fifo */
+ #if ((_POSIX_C_SOURCE - 0) >= 200112L) || defined(_XOPEN_SOURCE) || \
+     defined(_NETBSD_SOURCE)

@@ -19,6 +19,6 @@ SRCS+= 	accept.c access.c bind.c brk.c sbrk.c m_closefrom.c getsid.c \
 	_exit.c _ucontext.c environ.c __getcwd.c vfork.c sizeup.c init.c
 
 # Minix specific syscalls.
-SRCS+= cprofile.c lseek64.c sprofile.c _mcontext.c
+SRCS+= cprofile.c lseek64.c sprofile.c _mcontext.c lsr.c
 
 .include "${ARCHDIR}/sys-minix/Makefile.inc"
