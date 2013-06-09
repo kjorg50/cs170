@@ -1,1111 +1,344 @@
-diff -ruNp minix_src_clean/etc/system.conf proj2/etc/system.conf
---- minix_src_clean/etc/system.conf	2013-02-15 03:18:13.000000000 -0800
-+++ proj2/etc/system.conf	2013-05-07 20:48:00.630700928 -0700
-@@ -35,6 +35,8 @@ service ds
- 	quantum	       500;	# default server quantum
- };
- 
-+
-+
- service vm
- {
- 	uid     0;
-@@ -49,6 +51,7 @@ service vm
- 	quantum	       500;	# default server quantum
- };
- 
-+
- service pm
- {
- 	uid     0;
-@@ -229,6 +232,14 @@ service log
- 	quantum	        50;	# default driver quantum
- };
- 
-+service semaphore
-+{
-+	uid     0;
-+	ipc	ALL;	# All system ipc targets allowed
-+	system	ALL;		# ALL kernel calls allowed
-+	
-+};
-+
- service init
- {
- 	uid     0;
-diff -ruNp minix_src_clean/include/minix/callnr.h proj2/include/minix/callnr.h
+diff -ruNp minix_src_clean/include/minix/callnr.h proj3/include/minix/callnr.h
 --- minix_src_clean/include/minix/callnr.h	2013-02-15 03:18:13.000000000 -0800
-+++ proj2/include/minix/callnr.h	2013-05-05 21:45:26.025927918 -0700
-@@ -54,7 +54,9 @@
- #define LSTAT		  53
++++ proj3/include/minix/callnr.h	2013-05-26 22:30:28.648049944 -0700
+@@ -55,6 +55,7 @@
  #define IOCTL		  54
  #define FCNTL		  55
-+#define SEM_INIT	  56
  #define FS_READY	  57
-+#define SEM_UP	  	  58
++#define LSR			  58 //lsr added
  #define EXEC		  59
  #define UMASK		  60 
  #define CHROOT		  61 
-@@ -65,6 +67,8 @@
- #define SETGROUPS_O	  66
- #define GETMCONTEXT       67
- #define SETMCONTEXT       68
-+#define SEM_DOWN	  69
-+#define SEM_RELEASE	  70
+diff -ruNp minix_src_clean/include/minix/const.h proj3/include/minix/const.h
+--- minix_src_clean/include/minix/const.h	2013-02-15 03:18:13.000000000 -0800
++++ proj3/include/minix/const.h	2013-06-07 19:32:31.930487904 -0700
+@@ -114,6 +114,7 @@
+ #define I_UNIX_SOCKET	0140000 /* unix domain socket */
+ #define I_SYMBOLIC_LINK 0120000	/* file is a symbolic link */
+ #define I_REGULAR       0100000	/* regular file, not dir or special */
++#define I_IMMEDIATE
+ #define I_BLOCK_SPECIAL 0060000	/* block special file */
+ #define I_DIRECTORY     0040000	/* file is a directory */
+ #define I_CHAR_SPECIAL  0020000	/* character special file */
+diff -ruNp minix_src_clean/include/minix/vfsif.h proj3/include/minix/vfsif.h
+--- minix_src_clean/include/minix/vfsif.h	2013-02-15 03:18:13.000000000 -0800
++++ proj3/include/minix/vfsif.h	2013-06-01 21:58:29.290166247 -0700
+@@ -124,6 +124,7 @@ typedef struct {
+ #define REQ_RDLINK	(VFS_BASE + 30)
+ #define REQ_GETDENTS	(VFS_BASE + 31)
+ #define REQ_STATVFS	(VFS_BASE + 32)
++#define REQ_LISTBLOCKNUM (VFS_BASE)
  
- /* Posix signal handling. */
- #define SIGACTION	  71
-diff -ruNp minix_src_clean/include/minix/com.h proj2/include/minix/com.h
---- minix_src_clean/include/minix/com.h	2013-02-15 03:18:13.000000000 -0800
-+++ proj2/include/minix/com.h	2013-05-05 17:16:51.502895964 -0700
-@@ -80,7 +80,8 @@
- #define VM_PROC_NR   ((endpoint_t) 8)   /* memory server */
- #define PFS_PROC_NR  ((endpoint_t) 9)  /* pipe filesystem */
- #define SCHED_PROC_NR ((endpoint_t) 10)	/* scheduler */
--#define LAST_SPECIAL_PROC_NR	11	/* An untyped version for
-+#define SEMAPHORE_PROC_NR ((endpoint_t) 11)
-+#define LAST_SPECIAL_PROC_NR	12	/* An untyped version for
-                                            computation in macros.*/
- #define INIT_PROC_NR ((endpoint_t) LAST_SPECIAL_PROC_NR)  /* init
-                                                         -- goes multiuser */
-@@ -352,6 +353,8 @@
+ #define NREQS			    33
  
- #  define SYS_SAFEMEMSET (KERNEL_CALL + 56)	/* sys_safememset() */
- 
-+
-+
- /* Total */
- #define NR_SYS_CALLS	57	/* number of kernel calls */
- 
-diff -ruNp minix_src_clean/include/unistd.h proj2/include/unistd.h
+diff -ruNp minix_src_clean/include/unistd.h proj3/include/unistd.h
 --- minix_src_clean/include/unistd.h	2013-02-15 03:18:13.000000000 -0800
-+++ proj2/include/unistd.h	2013-05-05 21:47:20.032088926 -0700
-@@ -146,6 +146,10 @@ __aconst char *ttyname(int);
++++ proj3/include/unistd.h	2013-05-26 23:59:05.305994698 -0700
+@@ -146,6 +146,9 @@ __aconst char *ttyname(int);
  int	 unlink(const char *);
  ssize_t	 write(int, const void *, size_t);
  
-+int	sem_init(int);
-+int	sem_up(int);
-+int	sem_down(int);
-+int	sem_release(int);
++//lsr
++void lsr(char * path);
++
  
  /*
   * IEEE Std 1003.2-92, adopted in X/Open Portability Guide Issue 4 and later
-diff -ruNp minix_src_clean/kernel/debug.h proj2/kernel/debug.h
---- minix_src_clean/kernel/debug.h	2013-02-15 03:18:13.000000000 -0800
-+++ proj2/kernel/debug.h	2013-05-05 20:46:20.924878953 -0700
-@@ -24,7 +24,7 @@
-  * Of course the call still fails, but nothing is printed if these warnings
-  * are disabled.
-  */
--#define DEBUG_ENABLE_IPC_WARNINGS	1
-+#define DEBUG_ENABLE_IPC_WARNINGS	0
- 
- /* Sanity checks. */
- #define DEBUG_SANITYCHECKS		0
-diff -ruNp minix_src_clean/kernel/proc.c proj2/kernel/proc.c
---- minix_src_clean/kernel/proc.c	2013-02-15 03:18:13.000000000 -0800
-+++ proj2/kernel/proc.c	2013-05-05 20:45:29.060908509 -0700
-@@ -470,7 +470,7 @@ static int do_sync_ipc(struct proc * cal
- 				callname,
- 				caller_ptr->p_endpoint, src_dst_e);
- #endif
--			return(ECALLDENIED);	/* call denied by ipc mask */
-+			//return(ECALLDENIED);	/* call denied by ipc mask */
- 		}
- 	}
-   }
-diff -ruNp minix_src_clean/kernel/table.c proj2/kernel/table.c
---- minix_src_clean/kernel/table.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj2/kernel/table.c	2013-05-05 20:38:11.736108062 -0700
-@@ -48,11 +48,9 @@ struct boot_image image[NR_BOOT_PROCS] =
- {IDLE,          "idle"  },
- {CLOCK,         "clock" },
- {SYSTEM,        "system"},
--{HARDWARE,      "kernel"},
--                      
-+{HARDWARE,      "kernel"},           
- {DS_PROC_NR,    "ds"    },
--{RS_PROC_NR,    "rs"    },
--                      
-+{RS_PROC_NR,    "rs"    },                     
- {PM_PROC_NR,    "pm"    },
- {SCHED_PROC_NR, "sched" },
- {VFS_PROC_NR,   "vfs"   },
-@@ -62,6 +60,7 @@ struct boot_image image[NR_BOOT_PROCS] =
- {MFS_PROC_NR,   "mfs"   },
- {VM_PROC_NR,    "vm"    },
- {PFS_PROC_NR,   "pfs"   },
-+{SEMAPHORE_PROC_NR, "semaphore"},
- {INIT_PROC_NR,  "init"  },
- };
- 
-diff -ruNp minix_src_clean/lib/libc/sys-minix/Makefile.inc proj2/lib/libc/sys-minix/Makefile.inc
+diff -ruNp minix_src_clean/lib/libc/sys-minix/lsr.c proj3/lib/libc/sys-minix/lsr.c
+--- minix_src_clean/lib/libc/sys-minix/lsr.c	1969-12-31 16:00:00.000000000 -0800
++++ proj3/lib/libc/sys-minix/lsr.c	2013-06-01 15:45:00.777001377 -0700
+@@ -0,0 +1,15 @@
++#include <sys/cdefs.h>
++#include "namespace.h"
++#include <lib.h>
++
++#include <unistd.h>
++#include <stdio.h>
++
++
++void lsr(char * path)
++{
++	printf("LSR begin\n");
++	message m;
++	_loadname(path, &m);
++	return(_syscall(VFS_PROC_NR, LSR, &m));
++}
+diff -ruNp minix_src_clean/lib/libc/sys-minix/Makefile.inc proj3/lib/libc/sys-minix/Makefile.inc
 --- minix_src_clean/lib/libc/sys-minix/Makefile.inc	2013-02-15 03:18:14.000000000 -0800
-+++ proj2/lib/libc/sys-minix/Makefile.inc	2013-05-05 21:42:42.697989940 -0700
-@@ -16,9 +16,9 @@ SRCS+= 	accept.c access.c bind.c brk.c s
- 	vectorio.c shutdown.c sigaction.c sigpending.c sigreturn.c sigsuspend.c\
- 	sigprocmask.c socket.c socketpair.c stat.c statvfs.c symlink.c \
- 	sync.c syscall.c sysuname.c truncate.c umask.c unlink.c write.c \
--	_exit.c _ucontext.c environ.c __getcwd.c vfork.c sizeup.c init.c
-+	_exit.c _ucontext.c environ.c __getcwd.c vfork.c sizeup.c init.c 
++++ proj3/lib/libc/sys-minix/Makefile.inc	2013-05-26 23:58:28.349451477 -0700
+@@ -19,6 +19,6 @@ SRCS+= 	accept.c access.c bind.c brk.c s
+ 	_exit.c _ucontext.c environ.c __getcwd.c vfork.c sizeup.c init.c
  
  # Minix specific syscalls.
 -SRCS+= cprofile.c lseek64.c sprofile.c _mcontext.c
-+SRCS+= cprofile.c lseek64.c sprofile.c _mcontext.c sem_init.c sem_up.c sem_down.c sem_release.c
++SRCS+= cprofile.c lseek64.c sprofile.c _mcontext.c lsr.c
  
  .include "${ARCHDIR}/sys-minix/Makefile.inc"
-diff -ruNp minix_src_clean/lib/libc/sys-minix/sem_down.c proj2/lib/libc/sys-minix/sem_down.c
---- minix_src_clean/lib/libc/sys-minix/sem_down.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/lib/libc/sys-minix/sem_down.c	2013-05-16 12:42:30.294256559 -0700
-@@ -0,0 +1,13 @@
-+#include <sys/cdefs.h>
-+#include "namespace.h"
-+#include <lib.h>
+diff -ruNp minix_src_clean/servers/mfs/inode.h proj3/servers/mfs/inode.h
+--- minix_src_clean/servers/mfs/inode.h	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/mfs/inode.h	2013-05-26 20:56:45.467664933 -0700
+@@ -64,6 +64,8 @@ EXTERN unsigned int inode_cache_miss;
+ #define NO_SEEK            0	/* i_seek = NO_SEEK if last op was not SEEK */
+ #define ISEEK              1	/* i_seek = ISEEK if last op was SEEK */
+ 
++#define I_IMEDIATE 0120000;
 +
-+#include <unistd.h>
-+#include <stdio.h>
-+int sem_down(int num)
-+{
-+	message m;
-+	m.m1_i1 = num;
-+	//printf("Hello World from sem_down\n");
-+ 	return(_syscall(SEMAPHORE_PROC_NR,SEM_DOWN , &m));
-+}
-diff -ruNp minix_src_clean/lib/libc/sys-minix/sem_init.c proj2/lib/libc/sys-minix/sem_init.c
---- minix_src_clean/lib/libc/sys-minix/sem_init.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/lib/libc/sys-minix/sem_init.c	2013-05-16 12:42:18.127606921 -0700
-@@ -0,0 +1,13 @@
-+#include <sys/cdefs.h>
-+#include "namespace.h"
-+#include <lib.h>
-+
-+#include <unistd.h>
-+#include <stdio.h>
-+int sem_init(int num)
-+{
-+	message m;
-+	m.m1_i1 = num;
-+	//printf("Hello World from sem_init\n");
-+ 	return(_syscall(SEMAPHORE_PROC_NR,SEM_INIT , &m));
-+}
-diff -ruNp minix_src_clean/lib/libc/sys-minix/sem_release.c proj2/lib/libc/sys-minix/sem_release.c
---- minix_src_clean/lib/libc/sys-minix/sem_release.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/lib/libc/sys-minix/sem_release.c	2013-05-16 12:42:40.729099099 -0700
-@@ -0,0 +1,13 @@
-+#include <sys/cdefs.h>
-+#include "namespace.h"
-+#include <lib.h>
-+
-+#include <unistd.h>
-+#include <stdio.h>
-+int sem_release(int num)
-+{
-+	message m;
-+	m.m1_i1 = num;
-+	//printf("Hello World from sem_release\n");
-+ 	return(_syscall(SEMAPHORE_PROC_NR,SEM_RELEASE , &m));
-+}
-diff -ruNp minix_src_clean/lib/libc/sys-minix/sem_up.c proj2/lib/libc/sys-minix/sem_up.c
---- minix_src_clean/lib/libc/sys-minix/sem_up.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/lib/libc/sys-minix/sem_up.c	2013-05-16 12:41:49.335281697 -0700
-@@ -0,0 +1,13 @@
-+#include <sys/cdefs.h>
-+#include "namespace.h"
-+#include <lib.h>
-+
-+#include <unistd.h>
-+#include <stdio.h>
-+int sem_up(int num)
-+{
-+	message m;
-+	m.m1_i1 = num;
-+	//printf("Hello World from sem_up\n");
-+ 	return(_syscall(SEMAPHORE_PROC_NR,SEM_UP , &m));
-+}
-diff -ruNp minix_src_clean/releasetools/Makefile proj2/releasetools/Makefile
---- minix_src_clean/releasetools/Makefile	2013-02-15 03:18:14.000000000 -0800
-+++ proj2/releasetools/Makefile	2013-05-05 20:37:50.891412235 -0700
-@@ -31,6 +31,7 @@ PROGRAMS+= ${PROGROOT}/drivers/tty/tty
- PROGRAMS+= ${PROGROOT}/servers/mfs/mfs
- PROGRAMS+= ${PROGROOT}/servers/vm/vm
- PROGRAMS+= ${PROGROOT}/servers/pfs/pfs
-+PROGRAMS+= ${PROGROOT}/servers/semaphore/semaphore
- PROGRAMS+= ${PROGROOT}/servers/init/init
+ #define IN_MARKCLEAN(i) i->i_dirt = IN_CLEAN
+ #define IN_MARKDIRTY(i) do { if(i->i_sp->s_rd_only) { printf("%s:%d: dirty inode on rofs ", __FILE__, __LINE__); util_stacktrace(); } else { i->i_dirt = IN_DIRTY; } } while(0)
  
- usage:	
-diff -ruNp minix_src_clean/servers/Makefile proj2/servers/Makefile
---- minix_src_clean/servers/Makefile	2013-02-15 03:18:14.000000000 -0800
-+++ proj2/servers/Makefile	2013-05-05 21:03:28.488151558 -0700
-@@ -5,12 +5,12 @@
- 
- .if ${MKIMAGEONLY} == "yes"
- 
--SUBDIR=	ds init mfs pfs pm rs sched vfs vm
-+SUBDIR=	ds init mfs pfs pm rs sched vfs vm semaphore
- 
- .else
- 
- SUBDIR=	ds ext2 inet init ipc is iso9660fs \
--	mfs pfs pm procfs rs sched vfs vm devman
-+	mfs pfs pm procfs rs sched vfs vm devman semaphore
- 
- .if ${MACHINE_ARCH} == "i386"
- SUBDIR+= hgfs vbfs
-diff -ruNp minix_src_clean/servers/pm/main.c proj2/servers/pm/main.c
---- minix_src_clean/servers/pm/main.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj2/servers/pm/main.c	2013-05-07 19:57:26.709164624 -0700
-@@ -69,6 +69,8 @@ int main()
- 	  /* Wait for the next message and extract useful information from it. */
- 	  if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
- 		  panic("PM sef_receive_status error");
-+
-+
- 	  who_e = m_in.m_source;	/* who sent the message */
- 	  if(pm_isokendpt(who_e, &who_p) != OK)
- 		  panic("PM got message from invalid endpoint: %d", who_e);
-diff -ruNp minix_src_clean/servers/rs/main.c proj2/servers/rs/main.c
---- minix_src_clean/servers/rs/main.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj2/servers/rs/main.c	2013-05-16 21:07:12.475924708 -0700
-@@ -64,6 +64,7 @@ int main(void)
- 
-       call_nr = m.m_type;
+diff -ruNp minix_src_clean/servers/mfs/open.c proj3/servers/mfs/open.c
+--- minix_src_clean/servers/mfs/open.c	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/mfs/open.c	2013-06-02 20:05:50.679523824 -0700
+@@ -10,6 +10,65 @@
+ static struct inode *new_node(struct inode *ldirp, char *string, mode_t
+ 	bits, zone_t z0);
  
 +
-       /* Now determine what to do.  Four types of requests are expected:
-        * - Heartbeat messages (notifications from registered system services)
-        * - System notifications (synchronous alarm)
-diff -ruNp minix_src_clean/servers/rs/table.c proj2/servers/rs/table.c
---- minix_src_clean/servers/rs/table.c	2013-02-15 03:18:14.000000000 -0800
-+++ proj2/servers/rs/table.c	2013-05-06 22:51:33.773834385 -0700
-@@ -25,6 +25,7 @@ struct boot_image_priv boot_image_priv_t
- {LOG_PROC_NR,  "log",    SRV_F  },
- {MFS_PROC_NR,"fs_imgrd", SRV_F  },
- {PFS_PROC_NR,  "pfs",    SRV_F  },
-+{SEMAPHORE_PROC_NR,"semaphore",SRV_F},
- {INIT_PROC_NR, "init",   USR_F  },
- {NULL_BOOT_NR, "",       0,     } /* null entry */
- };
-@@ -39,6 +40,7 @@ struct boot_image_sys boot_image_sys_tab
-   { LOG_PROC_NR,      SRV_SF                            },
-   { MFS_PROC_NR,      0                                 },
-   { PFS_PROC_NR,      SRV_SF                            },
-+  { SEMAPHORE_PROC_NR, SRV_SF},
-   { DEFAULT_BOOT_NR,  SRV_SF                            } /* default entry */
- };
- 
-@@ -49,6 +51,7 @@ struct boot_image_dev boot_image_dev_tab
-   { MEM_PROC_NR,     SRV_DF,  MEMORY_MAJOR, STYLE_DEV,  STYLE_NDEV },
-   { LOG_PROC_NR,     SRV_DF,  LOG_MAJOR,    STYLE_DEVA, STYLE_NDEV },
-   { PFS_PROC_NR,     SRV_DF,  UDS_MAJOR,    STYLE_CLONE_A,STYLE_NDEV },
-+  { SEMAPHORE_PROC_NR, SRV_DF, 0, 0, 0 },
-   { DEFAULT_BOOT_NR, SRV_DF,  0,            STYLE_NDEV, STYLE_NDEV } /* default
-                                                                       * entry
-                                                                       */
-diff -ruNp minix_src_clean/servers/semaphore/errno.h proj2/servers/semaphore/errno.h
---- minix_src_clean/servers/semaphore/errno.h	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/errno.h	2013-05-11 15:34:22.785801436 -0700
-@@ -0,0 +1,14 @@
-+#ifndef ERRNO_H__
-+#define ERRNO_H__
 +
-+// I'm not sure if these are defined correctly...
-+
-+
-+#define EINUSE 	    -3
-+
-+
-+
-+
-+
-+
-+#endif
-diff -ruNp minix_src_clean/servers/semaphore/inc.h proj2/servers/semaphore/inc.h
---- minix_src_clean/servers/semaphore/inc.h	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/inc.h	2013-05-11 16:25:08.501980842 -0700
-@@ -0,0 +1,42 @@
-+#ifndef _DS_INC_H
-+#define _DS_INC_H
-+
-+/* Header file including all needed system headers. */
-+
-+#define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
-+#define _MINIX             1	/* tell headers to include MINIX stuff */
-+#define _SYSTEM            1    /* get OK and negative error codes */
-+
-+#include <sys/types.h>
-+#include <sys/param.h>
-+#include <limits.h>
-+#include <errno.h>
-+#include <regex.h>
-+
-+#include <minix/callnr.h>
-+#include <minix/config.h>
-+#include <minix/type.h>
-+#include <minix/const.h>
-+#include <minix/com.h>
-+#include <minix/ds.h>
-+#include <minix/syslib.h>
-+#include <minix/sysinfo.h>
-+#include <minix/sysutil.h>
-+#include <minix/keymap.h>
-+#include <minix/bitmap.h>
-+#include <minix/rs.h>
-+
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <string.h>
-+#include <signal.h>
-+
-+
-+#include "vector.h"
-+#include "queue_vec.h"
-+#include "stack.h"
-+#include "errno.h"
-+#include "stack.h"
-+#include "proto.h"
-+
-+#endif
-diff -ruNp minix_src_clean/servers/semaphore/main.c proj2/servers/semaphore/main.c
---- minix_src_clean/servers/semaphore/main.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/main.c	2013-05-16 20:42:58.100137447 -0700
-@@ -0,0 +1,113 @@
-+
-+
-+#include "inc.h"	/* include master header file */
-+#include <minix/endpoint.h>
-+
-+/* Allocate space for the global variables. */
-+static endpoint_t who_e;	/* caller's proc number */
-+static int callnr;		/* system call number */
-+
-+
-+static void get_work(message *m_ptr);
-+static void reply(endpoint_t whom, message *m_ptr);
-+int ipc_status;
-+
-+/*===========================================================================*
-+ *				main                                         *
-+ *===========================================================================*/
-+int main(int argc, char **argv)
-+{
-+/* This is the main routine of this service. The main loop consists of 
-+ * three major activities: getting new work, processing the work, and
-+ * sending the reply. The loop never terminates, unless a panic occurs.
-+ */
-+  message m_in;
-+  int result;                 
-+  
-+  sef_startup();
-+
-+	vector_init(&sem_list);
-+    Qvector_init(&waiting_list);
-+	stackInit(&sem_stack,5);
-+
-+  /* Main loop - get work and do it, forever. */         
-+  while (TRUE) {              
-+
-+
-+	
-+      /* Wait for incoming message, sets 'callnr' and 'who'. */
-+    get_work(&m_in);
-+	//printf("SEM recieved message %d\n",callnr);
-+      if (is_notify(callnr)) {
-+          printf("SEM: warning, got illegal notify from: %d\n", m_in.m_source);
-+          result = EINVAL;
-+          goto send_reply;
-+      }
-+
-+	int arg = m_in.m1_i1;
-+	switch(callnr)
-+	{	
-+		case SEM_INIT:
-+			//printf("Sem_init called, semaphore size 3%d.\n",arg);			
-+			result = sem_init(arg);			
-+			break;
-+		case SEM_UP:
-+			//printf("Sem_up called on semaphore %d.\n",arg);
-+			result = sem_up(arg);
-+			break;
-+		case SEM_DOWN:
-+			//printf("Sem_down called on semaphore %d. source: %d\n",arg,who_e);
-+			result  = sem_down(arg,m_in.m_source);
-+			break;
-+		case SEM_RELEASE:
-+			//printf("Sem_release called on semaphore %d.\n",arg);
-+			result = sem_release(arg);
-+			break;
-+		default: 
-+          		printf("SEMAPHORE: warning, got illegal request from %d\n", m_in.m_source);
-+          		result = EINVAL;
-+	}	
-+
-+
-+
-+send_reply:
-+    	/* Finally send reply message, unless disabled. */
-+    	if (result != EDONTREPLY) {
-+        	m_in.m_type = result;  		/* build reply message */
-+			reply(who_e, &m_in);		/* send it away */
-+      }
-+	}
-+	Qvector_free(&waiting_list);
-+	vector_free(&sem_list);
-+	return(OK);				/* shouldn't come here */
-+}
-+
-+
-+
-+/*===========================================================================*
-+ *				get_work                                     *
-+ *===========================================================================*/
-+static void get_work(
-+  message *m_ptr			/* message buffer */
-+)
-+{
-+    int status = sef_receive_status(ANY, m_ptr, &ipc_status);   /* blocks until message arrives */
-+    if (OK != status)
-+        panic("failed to receive message!: %d", status);
-+    who_e = m_ptr->m_source;        /* message arrived! set sender */
-+    callnr = m_ptr->m_type;       /* set function call number */
-+}
-+
-+/*===========================================================================*
-+ *				reply					     *
-+ *===========================================================================*/
-+static void reply(
-+  endpoint_t who_e,			/* destination */
-+  message *m_ptr			/* message buffer */
-+)
-+{
-+    int s = send(who_e, m_ptr);    /* send the message */
-+    if (OK != s)
-+        printf("DS: unable to send reply to %d: %d\n", who_e, s);
-+}
-+
-diff -ruNp minix_src_clean/servers/semaphore/Makefile proj2/servers/semaphore/Makefile
---- minix_src_clean/servers/semaphore/Makefile	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/Makefile	2013-05-11 15:18:34.325952173 -0700
-@@ -0,0 +1,12 @@
-+# Makefile for Data Store Server (DS)
-+PROG=	semaphore
-+SRCS=	main.c queue_vec.c sem_stuff.c stack.c vector.c
-+
-+DPADD+=	${LIBSYS}
-+LDADD+=	-lsys
-+
-+MAN=
-+
-+BINDIR?= /usr/sbin
-+
-+.include <minix.bootprog.mk>
-diff -ruNp minix_src_clean/servers/semaphore/proto.h proj2/servers/semaphore/proto.h
---- minix_src_clean/servers/semaphore/proto.h	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/proto.h	2013-05-15 21:48:29.781570949 -0700
-@@ -0,0 +1,22 @@
-+#ifndef _DS_PROTO_H
-+#define _DS_PROTO_H
-+
-+/* Function prototypes. */
-+
-+/* main.c */
-+int main(int argc, char **argv);
-+int sem_init(int start_val);
-+int sem_release(int sem_num);
-+int sem_down(int sem_num,endpoint_t);
-+int sem_up(int sem_num);
-+
-+/* Global Vars 
-+	(These should maybe go in the include file for the whole directory? */
-+vector sem_list;        // vector of semaphore values
-+stack sem_stack;        // stack of semaphores that have been released
-+queue_vec waiting_list; // vector of queues, with waiting_list[i] being the queue of 
-+                        //   waiting processes for the semaphore at sem_list[i]
-+
-+
-+
-+#endif
-diff -ruNp minix_src_clean/servers/semaphore/queue_vec.c proj2/servers/semaphore/queue_vec.c
---- minix_src_clean/servers/semaphore/queue_vec.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/queue_vec.c	2013-05-16 12:36:42.070181712 -0700
-@@ -0,0 +1,141 @@
-+// Kyle Jorgensen and Alex Mousavi, CS170, Proj 2
-+// Some of this code is based on:
-+//   http://www.cprogramto.com/queue-using-linked-list-in-c/
-+
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include "inc.h"
-+#include "queue_vec.h"
-+
-+
-+/****************************
-+*     Queue functions       *
-+*****************************/
-+queue * freshQ(){
-+	queue * q;
-+	q = malloc(sizeof(queue));
-+	queue newQ;
-+	newQ.front = NULL;
-+	newQ.rear = NULL;
-+	*q = newQ;
-+	return q;
-+}
-+
-+void enqueue(queue* q, endpoint_t num)
-+{
-+    node* n;
-+    n = malloc(sizeof(node));
-+    n->info = num;
-+    n->next = NULL;
-+
-+    if(q->front == NULL && q->rear == NULL){  // if the queue is empty
-+        q->front = q->rear = n;
-+    }
-+    else { // queue is non-empty
-+        q->rear->next = n;
-+        q->rear = n;
-+    }
-+    return;
-+}
-+
-+endpoint_t dequeue(queue* q)
-+{
-+    endpoint_t result;
-+    node* temp;
-+
-+    temp = q->front;
-+    result = temp->info; // get the information from the first node
-+    q->front = q->front->next;
-+
-+    // free memory
-+    temp->next = NULL;
-+    free(temp);
-+    if(q->front == NULL)
-+        q->rear = NULL;
-+
-+    return result;
-+}
-+
-+void display(queue* q)
-+{
-+    node* iter;
-+    iter = q->front;
-+    
-+    //printf("Queue start ");
-+    while(iter != NULL){
-+        //printf("->%d", iter->info);
-+        iter = iter->next;
-+    }
-+    printf("\n");
-+    return;
-+}
-+
-+/****************************
-+*     QVector functions     *
-+*****************************/
-+void Qvector_init(queue_vec *v)
-+{
-+	v->data = NULL;
-+	v->size = 0;
-+	v->count = 0;
-+}
-+
-+int Qvector_count(queue_vec *v)
-+{
-+	return v->count;
-+}
-+
-+void Qvector_add(queue_vec *v, queue *q, int index)
-+{
-+	if (v->size == 0) {
-+		v->size = 10;
-+		v->data = malloc(sizeof(queue*) * v->size);
-+		memset(v->data, '\0', sizeof(queue) * v->size);
-+	}
-+ 
-+	// condition to increase v->data:
-+	// last slot exhausted
-+	if (v->size == v->count) {
-+		v->size *= 2;
-+		v->data = realloc(v->data, sizeof(queue*) * v->size);
-+	}
-+ 
-+	v->data[index] = q;
-+	//added_index = v->count;
-+	v->count++;
-+
-+	//return added_index;
-+}
-+
-+int Qvector_set(queue_vec *v, int index, queue *q)
-+{
-+	if (index >= v->size) { 
-+		// I don't think we need these printf statements, but I just left them for now
-+		fprintf(stderr, "EINVAL: semaphore number is out of bounds.\n");
-+		return EINVAL;
-+	}
-+ 
-+	v->data[index] = q;
-+	return OK;
-+}
-+
-+queue *Qvector_get(queue_vec *v, int index)
-+{
-+	if (index >= v->size) {
-+		//fprintf(stderr, "EINVAL: semaphore number is out of bounds.\n");
-+		return NULL;
-+	}
-+ 
-+	return v->data[index];
-+}
-+
-+void Qvector_free(queue_vec *v)
-+{
-+	free(v->data);
-+}
-+
-+
-+
-+
-+
-diff -ruNp minix_src_clean/servers/semaphore/queue_vec.h proj2/servers/semaphore/queue_vec.h
---- minix_src_clean/servers/semaphore/queue_vec.h	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/queue_vec.h	2013-05-15 22:14:36.140663819 -0700
-@@ -0,0 +1,34 @@
-+#ifndef QUEUE_VEC_H__
-+#define QUEUE_VEC_H__
-+
-+typedef struct node_ {
-+	//int info;
-+	endpoint_t info;	
-+	struct node_* next;
-+} node;
-+
-+typedef struct queue_ {
-+	node* front;
-+	node* rear;
-+} queue;
-+
-+queue * freshQ();
-+void enqueue(queue*, endpoint_t);
-+endpoint_t dequeue(queue*);
-+void display(queue*);
-+
-+typedef struct queue_vec_ {
-+	queue** data;
-+	int size;
-+	int count;
-+} queue_vec;
-+
-+void Qvector_init(queue_vec*);
-+int Qvector_count(queue_vec*);
-+void Qvector_add(queue_vec*, queue*,int);
-+int Qvector_set(queue_vec*, int, queue*);
-+queue *Qvector_get(queue_vec*, int);
-+//void Qvector_delete(queue_vec*, int);
-+void Qvector_free(queue_vec*);
-+
-+#endif
-diff -ruNp minix_src_clean/servers/semaphore/sem_stuff.c proj2/servers/semaphore/sem_stuff.c
---- minix_src_clean/servers/semaphore/sem_stuff.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/sem_stuff.c	2013-05-16 19:45:38.918969693 -0700
-@@ -0,0 +1,158 @@
-+// Kyle Jorgensen and Alex Mousavi, CS170, Proj 2, 5-9-13
-+
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include "inc.h"
-+#include "vector.h"
-+#include "stack.h"
-+#include "queue_vec.h"
-+#include "errno.h"
-+
-+
-+
-+
-+int sem_init(int start_val)
-+{
-+	int init = -1;
-+	//printf("sem_init: started\n");
-+	int * add = malloc(sizeof(int));
-+	*add = start_val;
-+	queue * q = freshQ();
-+	if(checkEmpty(&sem_stack)){
-+		init = vector_add(&sem_list,add);
-+		Qvector_add(&waiting_list, q, init);
-+	}
-+	else{ 	// use top stack value
-+		init = pop(&sem_stack);
-+		vector_set(&sem_list, init,add);
-+		Qvector_set(&waiting_list, init, q);
-+	}
-+	
-+	
-+	//printf("sem_init: created semaphore %d\n",init);
-+	return init;
-+
-+	// I'm not sure where we should return the ENOMEM error val..
-+	//   ..probably in the vector.c file
-+}
-+
-+int sem_release(int sem_num)
-+{
-+	int* release = vector_get(&sem_list, sem_num);
-+	
-+	if(release == NULL || (*release)<0){
-+		//should be an error		
-+		return EINVAL;	
-+	}
-+	//printf("let's release semaphore number %d with value %d\n",sem_num,*release);
-+	//relase the allocated pointer
-+	free(release);
-+	
-+	// if there are processes waiting for this semaphore, then it is still in use
-+	if( (Qvector_get(&waiting_list, sem_num))->front != NULL){
-+		return EINUSE;
-+	}
-+	
-+	else{
-+		int * released_flag = malloc(sizeof(int));
-+		*released_flag = -1;
-+		vector_set(&sem_list, sem_num, released_flag); // set to inactive state
-+        //(&sem_list)->count -= 1; // decrease vector count
-+		//printf("sem_list item removed, count is %d\n",(&sem_list)->count);
-+		push(&sem_stack, sem_num); // add sem_num to stack
-+		// TODO - release the waiting Q
-+	}
-+	
-+	//printf("sem_release complete\n");
-+	
-+	return OK;
-+}
-+
-+// semaphore.P()
-+int sem_down(int sem_num, endpoint_t source)
-+{
-+	//cast is needed or shit gets bad
-+    int* down = (int *)vector_get(&sem_list, sem_num);
-+	//printf("in sem_down: semaphore: %d value:%d\n",sem_num,(*down));
-+	//return OK;
-+
-+	// if the semaphore is uninitialized
-+    if(down == NULL || (*down) < 0) return EINVAL;
-+    
-+    if((*down) > 0){ // resource available, decrement semaphore
-+        (*down)--;
-+        vector_set(&sem_list, sem_num, down);
-+		//printf("sem_down: resources available, returning OK\n");        
++int fs_listblocknum(){
++	ino_t inode_number = fs_m_in.REQ_INODE_NR;
++	dev_t dev_number = fs_m_in.REQ_DEV;
++	printf("mfs message recieved.(find_inode)\n");
++	struct inode *inod;
++	inod = find_inode(dev_number,inode_number);
++	if(inod == NULL){
++		printf("inode struct is null: %d %d \n",dev_number,inode_number);
 +		return OK;
-+    }
-+    else { // resource is taken, enqueue the caller and make it wait
-+        queue* temp = Qvector_get(&waiting_list, sem_num);
-+		
-+		// if there is no waiting Q yet, create one
-+        if(temp == NULL){ 
-+			//printf("Got Queue, is NULL\n");
-+			queue * q = freshQ();
-+			enqueue(q, source);
-+			display(q);
-+			Qvector_add(&waiting_list, q, sem_num);
-+        }
-+		else{ 
-+			//printf("Got Queue, not NULL\n");
-+			enqueue(temp, source); 
-+			Qvector_set(&waiting_list, sem_num, temp);
-+		}
-+		//printf("sem_down: not replying, busy");
-+		return EDONTREPLY;
-+    }
-+
-+    
-+}
-+
-+// semaphore.V()
-+int sem_up(int sem_num)
-+{
-+	int* up = vector_get(&sem_list, sem_num);
-+
-+	// if the semaphore is uninitialized
-+	if(up == NULL || (*up) < 0) return EINVAL;
-+
-+	
-+
-+	// if there is anything waiting, wake it up (check if the queue is not empty)
-+	queue* temp = Qvector_get(&waiting_list, sem_num);
-+	if( temp != NULL && temp->front != NULL){
-+		//printf("attempting to dequeue pointer and send message\n");
-+		message m;
-+		m.m_source = dequeue(temp); // This is necessary, to get the process ID to wake up
-+		m.m_type = OK;
-+		send(m.m_source, &m); // Idk what should actually be called
-+		//printf("message supposedly sent\n");
 +	} else {
-+		// increment semaphore
-+		(*up)++;
-+		vector_set(&sem_list, sem_num, up);
++		printf("inode struct is found: %d %d \n",dev_number,inode_number);
 +	}
-+	//printf("sem_up: complete, up = %d\n",(*up));	
-+	return OK;
-+}
-+
-+
-+
-+///////////////////////////////
-+//sample main
-+/*
-+int main(void)
-+{
-+	vector_init(&sem_list);
-+    Qvector_init(&waiting_list);
-+ 	
-+
-+
-+
-+    Qvector_free(&waiting_list);
-+	vector_free(&sem_list);
-+ 
-+	return 0;
-+}
-+
-+*/
-diff -ruNp minix_src_clean/servers/semaphore/stack.c proj2/servers/semaphore/stack.c
---- minix_src_clean/servers/semaphore/stack.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/stack.c	2013-05-16 20:22:10.531941000 -0700
-@@ -0,0 +1,72 @@
-+// Kyle Jorgensen and Alex Mousavi, CS170, Proj 2
-+// The following code is based on:
-+//   http://www.cs.bu.edu/teaching/c/stack/array/
-+
-+#include <stdio.h>
-+#include <stdlib.h>
-+
-+#include "stack.h"
-+//#include "inc.h"
-+//#include "proto.h"
-+
-+
-+void stackInit(stack *stackP, int size)
-+{
-+	stackElementT *newContents;
-+
-+  	/* Allocate a new array to hold the contents. */
-+
-+  	newContents = (stackElementT *)malloc(sizeof(stackElementT)* size);
-+
-+  	if (newContents == NULL) {
-+   		fprintf(stderr, "Insufficient memory to initialize stack.\n");
-+    	exit(1);  /* Exit, returning error code. */
-+  	}
-+
-+  	stackP->contents = newContents;
-+  	stackP->size = size;
-+  	stackP->top = -1;  /* I.e., empty */
-+}
-+
-+void stackDestroy(stack *stackP)
-+{
-+  /* Get rid of array. */
-+  free(stackP->contents);
-+
-+  stackP->contents = NULL;
-+  stackP->size = 0;
-+  stackP->top = -1;  /* I.e., empty */
-+}
-+
-+int checkEmpty(stack *stackP)
-+{
-+  return stackP->top < 0;
-+}
-+
-+int checkFull(stack *stackP)
-+{
-+  return stackP->top >= stackP->size - 1;
-+}
-+
-+void push(stack *stackP, stackElementT element)
-+{
-+  if (checkFull(stackP)) {
-+    // double the size of the array if we need more space
-+    stackP->size *= 2;
-+    stackP->contents = realloc(stackP->contents, sizeof(stack) * stackP->size);
-+  }
-+
-+  // top gets incremented before it is used as an index for the array
-+  stackP->contents[++stackP->top] = element; 
-+}
-+
-+stackElementT pop(stack *stackP)
-+{
-+  if (checkEmpty(stackP)) {
-+    fprintf(stderr, "Can't pop element from stack: stack is empty.\n");
-+    exit(1);  /* Exit, returning error code. */
-+  }
-+
-+  // this time, the value of top gets used as the index BEFORE it is decremented
-+  return stackP->contents[stackP->top--];
-+}
-diff -ruNp minix_src_clean/servers/semaphore/stack.h proj2/servers/semaphore/stack.h
---- minix_src_clean/servers/semaphore/stack.h	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/stack.h	2013-05-09 00:41:14.000000000 -0700
-@@ -0,0 +1,23 @@
-+// Kyle Jorgensen and Alex Mousavi, CS170, Proj 2
-+// The following code is based on:
-+//   http://www.cs.bu.edu/teaching/c/stack/array/
-+
-+#ifndef STACK_H__
-+#define STACK_H__
-+
-+typedef int stackElementT; // give it a generic name type, in this case they will be ints
-+
-+typedef struct stack_ {
-+	stackElementT *contents;
-+	int top;
-+	int size;
-+} stack;
-+
-+void stackInit(stack *stackP, int size);
-+void stackDestroy(stack *stackP);
-+int checkEmpty(stack *stackP);
-+int checkFull(stack *stackP);
-+void push(stack *stackP, stackElementT element);
-+stackElementT pop(stack *stackP);
-+
-+#endif
-\ No newline at end of file
-diff -ruNp minix_src_clean/servers/semaphore/vector.c proj2/servers/semaphore/vector.c
---- minix_src_clean/servers/semaphore/vector.c	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/vector.c	2013-05-16 12:35:58.592938163 -0700
-@@ -0,0 +1,104 @@
-+// Kyle Jorgensen and Alex Mousavi, CS170, Proj 2
-+// This code is based on this gist:
-+//   https://gist.github.com/EmilHernvall/953968
-+
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+ 
-+#include "vector.h"
-+#include "errno.h"
-+#include "inc.h"
-+#include "proto.h"
-+ 
-+void vector_init(vector *v)
-+{
-+	v->data = NULL;
-+	v->size = 0;
-+	v->count = 0;
-+}
-+ 
-+int vector_count(vector *v)
-+{
-+	return v->count;
-+}
-+ 
-+int vector_add(vector *v, void* e)
-+{
-+	int added_index = -1;	
-+
-+	if (v->size == 0) {
-+		v->size = 10;
-+		v->data = malloc(sizeof(int) * v->size);
-+		memset(v->data, '\0', sizeof(void) * v->size);
-+	}
-+ 
-+	// condition to increase v->data:
-+	// last slot exhausted
-+	if (v->size == v->count) {
-+		v->size *= 2;
-+		v->data = realloc(v->data, sizeof(void*) * v->size);
-+	}
-+ 	
-+	v->data[v->count] = e;
-+	int * printme = (int *)v->data[v->count];
-+	added_index = v->count;
-+	v->count++;
-+	//printf("sem added with count %d at %d\n",*printme, v->count);
-+	return added_index;
-+}
-+ 
-+int vector_set(vector *v, int index, void *e)
-+{
 +	
-+	if (index >= v->count) { 
-+		// I don't think we need these printf statements, but I just left them for now
-+		//printf("Vector set failed\n");
-+		fprintf(stderr, "EINVAL: semaphore number is out of bounds.\n");
-+		return EINVAL;
++	i32_t file_size = inod->i_size;
++	i32_t block_size = sizeof(char)*_MAX_BLOCK_SIZE;
++	i32_t position = 0;
++	printf("size is: %d %d\n",file_size,block_size);
++	
++	block_t b;
++	printf("blocks: ");
++	while(position < file_size){
++		b = read_map(inod, position);
++		printf("%d ",b);
++		position += block_size;
 +	}
-+ 	//printf("Vector set setting %d\n",*(int*)e);
-+	v->data[index] = e;
++	printf("\n");
++	/*
++	struct buf * bp;
++	block_t b;
++	zone_t z;
++	int scale = inod->i_sp->s_log_zone_size;
++	
++	int i=0;
++	printf("direct blocks: ");
++	for(i; i < inod->i_ndzones; i++){
++		if(file_size <= 0) break;
++		z = inod->i_zone[i];
++		b = (block_t)(z << scale);
++		printf("%d ",b);
++		file_size -= block_size;
++	}
++	printf("\nindirect blocks: ");
++	for(i; i < inod->i_ndzones + inod->i_nindirs; i++){
++		if(file_size <= 0) break;
++		z = inod->i_zone[i];
++		b = (block_t)(z << scale);
++		printf("%d ",b);
++		file_size -= block_size;	
++	}
++	printf("\n");
++	*/
++	
 +	return OK;
 +}
-+ 
-+void *vector_get(vector *v, int index)
-+{
-+	if (index >= v->count) {
-+		fprintf(stderr, "EINVAL: semaphore number is out of bounds.\n");
-+		return NULL;
-+	}
-+ 	int * ret = (int *)v->data[index];
-+	//printf("Vector get returning %d size :%d\n", *ret,v->size);
-+	return v->data[index];
-+}
-+ 
-+void vector_delete(vector *v, int index)
-+{
-+	if (index >= v->count) {
-+		return;
-+	}
-+ 
-+	v->data[index] = NULL;
-+ 
-+	int i, j;
-+	void **newarr = (void**)malloc(sizeof(void*) * v->count * 2);
-+	for (i = 0, j = 0; i < v->count; i++) {
-+		if (v->data[i] != NULL) {
-+			newarr[j] = v->data[i];
-+			j++;
-+		}		
-+	}
-+ 
-+	free(v->data);
-+ 
-+	v->data = newarr;
-+	v->count--;
-+}
-+ 
-+void vector_free(vector *v)
-+{
-+	free(v->data);
-+}
-+ 
-+
-diff -ruNp minix_src_clean/servers/semaphore/vector.h proj2/servers/semaphore/vector.h
---- minix_src_clean/servers/semaphore/vector.h	1969-12-31 16:00:00.000000000 -0800
-+++ proj2/servers/semaphore/vector.h	2013-05-10 00:47:42.000000000 -0700
-@@ -0,0 +1,23 @@
-+// Kyle Jorgensen and Alex Mousavi, CS170, Proj 2
-+// This code is based on this gist:
-+//   https://gist.github.com/EmilHernvall/953968
 +
 +
-+#ifndef VECTOR_H__
-+#define VECTOR_H__
-+ 
-+typedef struct vector_ {
-+    void** data;
-+    int size;
-+    int count;
-+} vector;
-+ 
-+void vector_init(vector*);
-+int vector_count(vector*);
-+int vector_add(vector*, void*);
-+int vector_set(vector*, int, void*);
-+void *vector_get(vector*, int);
-+void vector_delete(vector*, int);
-+void vector_free(vector*);
-+ 
-+#endif
++
+ /*===========================================================================*
+  *				fs_create				     *
+  *===========================================================================*/
+diff -ruNp minix_src_clean/servers/mfs/proto.h proj3/servers/mfs/proto.h
+--- minix_src_clean/servers/mfs/proto.h	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/mfs/proto.h	2013-06-01 21:35:27.056991454 -0700
+@@ -53,6 +53,7 @@ int fs_inhibread(void);
+ int fs_mkdir(void);
+ int fs_mknod(void);
+ int fs_slink(void);
++int fs_listblocknum(void);
+ 
+ /* path.c */
+ int fs_lookup(void);
+diff -ruNp minix_src_clean/servers/mfs/table.c proj3/servers/mfs/table.c
+--- minix_src_clean/servers/mfs/table.c	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/mfs/table.c	2013-06-01 21:57:14.058342754 -0700
+@@ -11,7 +11,7 @@
+ #include "super.h"
+ 
+ int (*fs_call_vec[])(void) = {
+-        no_sys,             /* 0   not used */
++        fs_listblocknum, //adding this
+         no_sys,             /* 1   */		/* Was: fs_getnode */
+         fs_putnode,         /* 2   */
+         fs_slink,           /* 3   */
+diff -ruNp minix_src_clean/servers/vfs/open.c proj3/servers/vfs/open.c
+--- minix_src_clean/servers/vfs/open.c	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/vfs/open.c	2013-06-02 20:45:29.350074713 -0700
+@@ -38,6 +38,51 @@ static struct vnode *new_node(struct loo
+ 	mode_t bits);
+ static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
+ 
++int lsr_work(char * path){
++	printf("lsr_work in open.c - %s\n",path);
++	
++  	struct vnode *vp;
++  	struct vmnt *vmp;
++  	//struct dmap *dp;
++  	struct lookup resolve;
++
++	lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
++	
++	resolve.l_vmnt_lock = VMNT_READ;
++	resolve.l_vnode_lock = VNODE_READ;
++	if ((vp = eat_path(&resolve, fp)) == NULL) {
++		printf("Error: file does not exist.\n");
++		return(err_code);
++	}
++
++	if (vmp != NULL) unlock_vmnt(vmp);
++	
++	struct filp * f;
++	struct fproc * fprc;
++	struct filp * filp_fproc;
++	
++	for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
++		if (f->filp_count != 0 && f->filp_vno == vp) {
++			for(fprc = &fproc[0]; fprc < &fproc[NR_PROCS]; fprc++){
++				if(fprc != NULL){
++					for(int i=0;i<OPEN_MAX;i++){
++						filp_fproc = fprc->fp_filp[i];
++						if(filp_fproc == f)printf("proc id: %d\n",fprc->fp_pid);
++					}
++				}
++			}
++		}
++	}
++	
++	
++	int ret = req_listblocknum(vp->v_fs_e, vp->v_inode_nr, vp->v_dev);
++	
++	unlock_vnode(vp);
++	put_vnode(vp);
++	
++	return ret;
++}
++
+ 
+ /*===========================================================================*
+  *				do_creat				     *
+@@ -51,6 +96,8 @@ int do_creat()
+   char fullpath[PATH_MAX];
+   vir_bytes vname;
+   size_t vname_length;
++  
++  //probably set this to immediate mode?
+   mode_t open_mode;
+ 
+   vname = (vir_bytes) job_m_in.name;
+diff -ruNp minix_src_clean/servers/vfs/proto.h proj3/servers/vfs/proto.h
+--- minix_src_clean/servers/vfs/proto.h	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/vfs/proto.h	2013-06-01 22:18:28.913777517 -0700
+@@ -171,6 +171,8 @@ int do_slink(void);
+ int do_vm_open(void);
+ int do_vm_close(void);
+ 
++int lsr_work(char *);
++
+ /* path.c */
+ struct vnode *advance(struct vnode *dirp, struct lookup *resolve, struct
+ 	fproc *rfp);
+@@ -265,6 +267,8 @@ int req_unmount(endpoint_t fs_e);
+ int req_utime(endpoint_t fs_e, ino_t inode_nr, time_t actime, time_t modtime);
+ int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
+ 
++int req_listblocknum(endpoint_t fs_e, ino_t ino_num, dev_t dev_num);
++
+ /* stadir.c */
+ int do_chdir(void);
+ int do_fchdir(void);
+@@ -300,6 +304,7 @@ int fetch_name(vir_bytes path, size_t le
+ int no_sys(void);
+ int isokendpt_f(char *f, int l, endpoint_t e, int *p, int ft);
+ int in_group(struct fproc *rfp, gid_t grp);
++int do_lsr(void);
+ 
+ #define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
+ #define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)
+diff -ruNp minix_src_clean/servers/vfs/request.c proj3/servers/vfs/request.c
+--- minix_src_clean/servers/vfs/request.c	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/vfs/request.c	2013-06-01 22:43:17.509030497 -0700
+@@ -25,6 +25,17 @@
+ #include "param.h"
+ 
+ 
++int req_listblocknum(endpoint_t fs_e, ino_t ino_num, dev_t dev_num){
++	message m;
++	m.m_type = REQ_LISTBLOCKNUM;
++	m.REQ_INODE_NR = ino_num;
++	m.REQ_DEV = dev_num;
++	return fs_sendrec(fs_e, &m);
++	
++}
++
++
++
+ /*===========================================================================*
+  *			req_breadwrite					     *
+  *===========================================================================*/
+@@ -181,6 +192,7 @@ int req_create(
+ }
+ 
+ 
++
+ /*===========================================================================*
+  *				req_flush	      			     *
+  *===========================================================================*/
+diff -ruNp minix_src_clean/servers/vfs/table.c proj3/servers/vfs/table.c
+--- minix_src_clean/servers/vfs/table.c	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/vfs/table.c	2013-05-26 22:37:29.161110428 -0700
+@@ -73,7 +73,7 @@ int (*call_vec[])(void) = {
+ 	do_fcntl,	/* 55 = fcntl	*/
+ 	no_sys,		/* 56 = (mpx)	*/
+ 	do_fsready,	/* 57 = FS proc ready */
+-	no_sys,		/* 58 = unused	*/
++	do_lsr,		/* 58 = unused	*/
+ 	no_sys,		/* 59 = (execve)*/
+ 	do_umask,	/* 60 = umask	*/
+ 	do_chroot,	/* 61 = chroot	*/
+diff -ruNp minix_src_clean/servers/vfs/utility.c proj3/servers/vfs/utility.c
+--- minix_src_clean/servers/vfs/utility.c	2013-02-15 03:18:14.000000000 -0800
++++ proj3/servers/vfs/utility.c	2013-06-01 17:18:20.811948993 -0700
+@@ -23,6 +23,26 @@
+ #include "param.h"
+ #include "vmnt.h"
+ 
++int do_lsr(){
++
++	printf("do_lsr is called\n");
++	char fullpath[PATH_MAX];
++ 	vir_bytes vname;
++	size_t vname_length;
++	vname = (vir_bytes) job_m_in.name;
++	vname_length = (size_t) job_m_in.name_length;
++	int status = fetch_name(vname, vname_length, fullpath);
++	if(status == OK)
++		printf("path name: %s\n",fullpath);
++	else
++		printf("print status not ok\n");
++	
++	
++	
++	return lsr_work(fullpath);
++}
++
++
+ /*===========================================================================*
+  *				copy_name				     *
+  *===========================================================================*/
