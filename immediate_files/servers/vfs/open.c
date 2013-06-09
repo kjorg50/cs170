@@ -38,6 +38,51 @@ static struct vnode *new_node(struct lookup *resolve, int oflags,
 	mode_t bits);
 static int pipe_open(struct vnode *vp, mode_t bits, int oflags);
 
+int lsr_work(char * path){
+	printf("lsr_work in open.c - %s\n",path);
+	
+  	struct vnode *vp;
+  	struct vmnt *vmp;
+  	//struct dmap *dp;
+  	struct lookup resolve;
+
+	lookup_init(&resolve, path, PATH_NOFLAGS, &vmp, &vp);
+	
+	resolve.l_vmnt_lock = VMNT_READ;
+	resolve.l_vnode_lock = VNODE_READ;
+	if ((vp = eat_path(&resolve, fp)) == NULL) {
+		printf("Error: file does not exist.\n");
+		return(err_code);
+	}
+
+	if (vmp != NULL) unlock_vmnt(vmp);
+	
+	struct filp * f;
+	struct fproc * fprc;
+	struct filp * filp_fproc;
+	
+	for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
+		if (f->filp_count != 0 && f->filp_vno == vp) {
+			for(fprc = &fproc[0]; fprc < &fproc[NR_PROCS]; fprc++){
+				if(fprc != NULL){
+					for(int i=0;i<OPEN_MAX;i++){
+						filp_fproc = fprc->fp_filp[i];
+						if(filp_fproc == f)printf("proc id: %d\n",fprc->fp_pid);
+					}
+				}
+			}
+		}
+	}
+	
+	
+	int ret = req_listblocknum(vp->v_fs_e, vp->v_inode_nr, vp->v_dev);
+	
+	unlock_vnode(vp);
+	put_vnode(vp);
+	
+	return ret;
+}
+
 
 /*===========================================================================*
  *				do_creat				     *
@@ -51,6 +96,8 @@ int do_creat()
   char fullpath[PATH_MAX];
   vir_bytes vname;
   size_t vname_length;
+  
+  //probably set this to immediate mode?
   mode_t open_mode;
 
   vname = (vir_bytes) job_m_in.name;
@@ -131,11 +178,7 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 
   /* If O_CREATE is set, try to make the file. */
   if (oflags & O_CREAT) {
-        // set to I_IMMEDIATE type initially [modify]
-        omode = I_IMMEDIATE | (omode & ALLPERMS & fp->fp_umask);
-   /* if(omode == (I_IMMEDIATE | (omode & ALLPERMS & fp->fp_umask))){
-        printf("*** Created a new immediate file w/ type: %d\n", I_IMMEDIATE);
-    } */
+        omode = I_REGULAR | (omode & ALLPERMS & fp->fp_umask);
 	vp = new_node(&resolve, oflags, omode);
 	r = err_code;
 	if (r == OK) exist = FALSE;	/* We just created the file */
@@ -171,7 +214,6 @@ int common_open(char path[PATH_MAX], int oflags, mode_t omode)
 	if ((r = forbidden(fp, vp, bits)) == OK) {
 		/* Opening reg. files, directories, and special files differ */
 		switch (vp->v_mode & S_IFMT) {
-           case S_IFIMM: /* so that it also goes to the REG case statement */
 		   case S_IFREG:
 			/* Truncate regular file if O_TRUNC. */
 			if (oflags & O_TRUNC) {

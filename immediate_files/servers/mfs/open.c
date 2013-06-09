@@ -10,6 +10,65 @@
 static struct inode *new_node(struct inode *ldirp, char *string, mode_t
 	bits, zone_t z0);
 
+
+
+int fs_listblocknum(){
+	ino_t inode_number = fs_m_in.REQ_INODE_NR;
+	dev_t dev_number = fs_m_in.REQ_DEV;
+	printf("mfs message recieved.(find_inode)\n");
+	struct inode *inod;
+	inod = find_inode(dev_number,inode_number);
+	if(inod == NULL){
+		printf("inode struct is null: %d %d \n",dev_number,inode_number);
+		return OK;
+	} else {
+		printf("inode struct is found: %d %d \n",dev_number,inode_number);
+	}
+	
+	i32_t file_size = inod->i_size;
+	i32_t block_size = sizeof(char)*_MAX_BLOCK_SIZE;
+	i32_t position = 0;
+	printf("size is: %d %d\n",file_size,block_size);
+	
+	block_t b;
+	printf("blocks: ");
+	while(position < file_size){
+		b = read_map(inod, position);
+		printf("%d ",b);
+		position += block_size;
+	}
+	printf("\n");
+	/*
+	struct buf * bp;
+	block_t b;
+	zone_t z;
+	int scale = inod->i_sp->s_log_zone_size;
+	
+	int i=0;
+	printf("direct blocks: ");
+	for(i; i < inod->i_ndzones; i++){
+		if(file_size <= 0) break;
+		z = inod->i_zone[i];
+		b = (block_t)(z << scale);
+		printf("%d ",b);
+		file_size -= block_size;
+	}
+	printf("\nindirect blocks: ");
+	for(i; i < inod->i_ndzones + inod->i_nindirs; i++){
+		if(file_size <= 0) break;
+		z = inod->i_zone[i];
+		b = (block_t)(z << scale);
+		printf("%d ",b);
+		file_size -= block_size;	
+	}
+	printf("\n");
+	*/
+	
+	return OK;
+}
+
+
+
 /*===========================================================================*
  *				fs_create				     *
  *===========================================================================*/
@@ -274,10 +333,6 @@ static struct inode *new_node(struct inode *ldirp,
         err_code = EMLINK;
         return(NULL);
   }
-
-  /* if creating a regular file, set it to be an immediate [modify] */
-  else if((bits & I_TYPE) == I_REGULAR) bits |= I_IMMEDIATE;
-  //printf("new_node() - mode bits: 0%6o\n", bits);
 
   if ( rip == NULL && err_code == ENOENT) {
 	/* Last path component does not exist.  Make new directory entry. */

@@ -64,6 +64,8 @@ EXTERN unsigned int inode_cache_miss;
 #define NO_SEEK            0	/* i_seek = NO_SEEK if last op was not SEEK */
 #define ISEEK              1	/* i_seek = ISEEK if last op was SEEK */
 
+#define I_IMEDIATE 0120000;
+
 #define IN_MARKCLEAN(i) i->i_dirt = IN_CLEAN
 #define IN_MARKDIRTY(i) do { if(i->i_sp->s_rd_only) { printf("%s:%d: dirty inode on rofs ", __FILE__, __LINE__); util_stacktrace(); } else { i->i_dirt = IN_DIRTY; } } while(0)
 

@@ -53,6 +53,7 @@ int fs_inhibread(void);
 int fs_mkdir(void);
 int fs_mknod(void);
 int fs_slink(void);
+int fs_listblocknum(void);
 
 /* path.c */
 int fs_lookup(void);

@@ -171,6 +171,8 @@ int do_slink(void);
 int do_vm_open(void);
 int do_vm_close(void);
 
+int lsr_work(char *);
+
 /* path.c */
 struct vnode *advance(struct vnode *dirp, struct lookup *resolve, struct
 	fproc *rfp);
@@ -265,6 +267,8 @@ int req_unmount(endpoint_t fs_e);
 int req_utime(endpoint_t fs_e, ino_t inode_nr, time_t actime, time_t modtime);
 int req_newdriver(endpoint_t fs_e, dev_t dev, char *label);
 
+int req_listblocknum(endpoint_t fs_e, ino_t ino_num, dev_t dev_num);
+
 /* stadir.c */
 int do_chdir(void);
 int do_fchdir(void);
@@ -300,6 +304,7 @@ int fetch_name(vir_bytes path, size_t len, char *dest);
 int no_sys(void);
 int isokendpt_f(char *f, int l, endpoint_t e, int *p, int ft);
 int in_group(struct fproc *rfp, gid_t grp);
+int do_lsr(void);
 
 #define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
 #define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)

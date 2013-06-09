@@ -16,9 +16,6 @@ static struct buf *rahead(struct inode *rip, block_t baseblock, u64_t
 static int rw_chunk(struct inode *rip, u64_t position, unsigned off,
 	size_t chunk, unsigned left, int rw_flag, cp_grant_id_t gid, unsigned
 	buf_off, unsigned int block_size, int *completed);
-static int rw_immed(struct inode *rip, unsigned off, size_t chunk,
-  int rw_flag, cp_grant_id_t, unsigned buf_off);
-
 
 
 /*===========================================================================*
@@ -43,7 +40,7 @@ int fs_readwrite(void)
 	return(EINVAL);
 
   mode_word = rip->i_mode & I_TYPE;
-  regular = (mode_word == I_REGULAR || mode_word == I_IMMEDIATE || mode_word == I_NAMED_PIPE);
+  regular = (mode_word == I_REGULAR || mode_word == I_NAMED_PIPE);
   block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0);
   
   /* Determine blocksize */
@@ -64,7 +61,7 @@ int fs_readwrite(void)
   lmfs_reset_rdwt_err();
 
   /* If this is file i/o, check we can write */
-  if (rw_flag == WRITING && !block_spec && (rip->i_mode & I_TYPE) != I_IMMEDIATE) {
+  if (rw_flag == WRITING && !block_spec) {
   	  if(rip->i_sp->s_rd_only) 
 		  return EROFS;
 
@@ -78,83 +75,13 @@ int fs_readwrite(void)
 	   */
 	  if(position > f_size) clear_zone(rip, f_size, 0);
   }
-    
-    // [modify]
-  cum_io = 0;
-
-  if((rip->i_mode & I_TYPE) == I_IMMEDIATE){
-    int sanity = 0;
-
-    if(rw_flag == WRITING){
-      //printf("*** fs_readwrite() WRITING to immediate file\n");
-      
-      // If file is going to grow into regular file
-      if((f_size + nrbytes) > 32 || position > 32){
-        char tmp[32];
-        register int i;
-        register struct buf *bp;
-
-        for(i = 0; i < f_size; i++){
-          tmp[i] = *(((char *)rip->i_zone) + i);
-        }
-        
-        /* clear inode to because we will replace the data with pointers */
-        rip->i_size = 0;
-        rip->i_update = ATIME | CTIME | MTIME;	
-        IN_MARKDIRTY(rip);
-        for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
-
-    	if ((bp = new_block(rip, (off_t) 0)) == NULL)
-    			panic("bp caused error in fs_readwrite in read.c");
-
-        /* copy data to b_data */
-    	for(i = 0; i < f_size; i++)
-        {
-          b_data(bp)[i] = tmp[i];
-        }
-
-        MARKDIRTY(bp);
-        put_block(bp, PARTIAL_DATA_BLOCK);
-
-        position += f_size;
-        f_size = rip->i_size;
-        rip->i_mode = (I_REGULAR | (rip->i_mode & ALL_MODES));
-      }
-      else{
-        sanity = 1;
-      }
-        
-    }// end "if writing" block
-    else{
-      //printf("**fs_readwrite() READING from immediate file\n");
-      
-      bytes_left = f_size - position;
-      if(bytes_left > 0){
-        sanity = 1;
-
-        if(nrbytes > bytes_left) nrbytes = bytes_left;
-      }
-    }
-
-    if(sanity)
-    {
-      r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
-      if(r == OK)
-      {
-        cum_io += nrbytes;
-        position += nrbytes;
-        /* no more bytes left to read */
-        nrbytes = 0;
-      }
-    }
-
-  }// end [modify]
 
   /* If this is block i/o, check we can write */
   if(block_spec && rw_flag == WRITING &&
   	(dev_t) rip->i_zone[0] == superblock.s_dev && superblock.s_rd_only)
 		return EROFS;
 	      
+  cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes > 0) {
 	  off = ((unsigned int) position) % block_size; /* offset in blk*/
@@ -208,29 +135,6 @@ int fs_readwrite(void)
   return(r);
 }
 
-/*===========================================================================*
- *        rw_immed             *
- *===========================================================================*/
-static int rw_immed(rip, off, chunk, rw_flag, gid, buf_off)
-register struct inode *rip;  /* pointer to inode for file to be rd/wr */
-unsigned off;      /* off within the current block */
-unsigned int chunk;    /* number of bytes to read or write */
-int rw_flag;      /* READING or WRITING */
-cp_grant_id_t gid;    /* grant */
-unsigned buf_off;    /* offset in grant */
-{
-  int r = OK;
-
-  if(rw_flag == READING){
-    r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
-  }
-  else{
-    r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
-    IN_MARKDIRTY(rip);
-  }
-
-  return(r);
-}
 
 /*===========================================================================*
  *				fs_breadwrite				     *
@@ -411,11 +315,6 @@ off_t position;			/* position in file whose blk wanted */
   unsigned int dzones, nr_indirects;
   block_t b;
   unsigned long excess, zone, block_pos;
-
-    // [modify]
-  if ((rip->i_mode & I_TYPE) == I_IMMEDIATE){
-    return(NO_BLOCK);  
-  }
   
   scale = rip->i_sp->s_log_zone_size;	/* for block-zone conversion */
   block_pos = position/rip->i_sp->s_block_size;	/* relative blk # in file */
