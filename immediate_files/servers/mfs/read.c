@@ -16,6 +16,9 @@ static struct buf *rahead(struct inode *rip, block_t baseblock, u64_t
 static int rw_chunk(struct inode *rip, u64_t position, unsigned off,
 	size_t chunk, unsigned left, int rw_flag, cp_grant_id_t gid, unsigned
 	buf_off, unsigned int block_size, int *completed);
+static int rw_immed(struct inode *rip, unsigned off, size_t chunk,
+  int rw_flag, cp_grant_id_t, unsigned buf_off);
+
 
 
 /*===========================================================================*
@@ -135,17 +138,7 @@ int fs_readwrite(void)
 
     if(sanity)
     {
-      //r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
-      r = OK;
-      /******   R/W for immediate   ******/
-      if(rw_flag == READING){
-        r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
-      } 
-      else {
-        r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) cum_io, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
-        IN_MARKDIRTY(rip);
-      }
-
+      r = rw_immed(rip, position, nrbytes, rw_flag, gid, cum_io);
       if(r == OK)
       {
         cum_io += nrbytes;
@@ -215,6 +208,29 @@ int fs_readwrite(void)
   return(r);
 }
 
+/*===========================================================================*
+ *        rw_immed             *
+ *===========================================================================*/
+static int rw_immed(rip, off, chunk, rw_flag, gid, buf_off)
+register struct inode *rip;  /* pointer to inode for file to be rd/wr */
+unsigned off;      /* off within the current block */
+unsigned int chunk;    /* number of bytes to read or write */
+int rw_flag;      /* READING or WRITING */
+cp_grant_id_t gid;    /* grant */
+unsigned buf_off;    /* offset in grant */
+{
+  int r = OK;
+
+  if(rw_flag == READING){
+    r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
+  }
+  else{
+    r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off, (vir_bytes) (rip->i_zone+off), (size_t) chunk);
+    IN_MARKDIRTY(rip);
+  }
+
+  return(r);
+}
 
 /*===========================================================================*
  *				fs_breadwrite				     *
